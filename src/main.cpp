@@ -38,8 +38,9 @@
 #include <DHT.h>
 #include <SPI.h>
 #include <SD.h>
-#include <SReg.h>
 #include "webcontent.h"
+
+#include "../lib/RTC/src/RTC.h"
 
 extern "C" {
 #include "user_interface.h"

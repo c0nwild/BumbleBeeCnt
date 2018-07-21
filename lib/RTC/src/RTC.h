@@ -5,8 +5,8 @@
  *      Author: conradwild
  */
 
-#ifndef SRC_SREG_H_
-#define SRC_SREG_H_
+#ifndef SRC_RTC_H_
+#define SRC_RTC_H_
 
 #include <stdint.h>
 
@@ -45,5 +45,5 @@ public:
 
 } /* namespace rtc */
 
-#endif /* SRC_SREG_H_ */
+#endif /* SRC_RTC_H_ */
 
