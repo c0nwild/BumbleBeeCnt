@@ -55,18 +55,8 @@ const char *password = "thereisnospoon";
 
 ESP8266WebServer server(80);
 
-#define DHTTYPE DHT22
-
-const int chipSelectSD = D8;
-
-// DHT Sensor
-const int DHTPin = 0;
-// Initialize DHT sensor.
-DHT dht(DHTPin, DHTTYPE);
 WebContent web_content;
 
-// Initialize Portexpander
-Adafruit_MCP23017 mcp;
 
 float temperature, humidity;
 bool is_initialized = false;
@@ -110,44 +100,11 @@ void init_wifi() {
 #endif
 }
 
-void init_peripheral_system() {
-#ifdef SERIAL_DEBUG
-	Serial.print("Configuring dht22...");
-#endif
-	dht.begin();
-#ifdef SERIAL_DEBUG
-	Serial.println("Done...");
-#endif
-#ifdef SERIAL_DEBUG
-	Serial.print("Configuring mcp23017...");
-#endif
-	mcp.begin();
-	mcp.pinMode(0, INPUT);
-	for (int n = 0; n < 16; n++)
-		mcp.pullUp(n, HIGH);
-	//mcp.pullUp(0, HIGH);
-	mcp.setupInterrupts(true, true, LOW);
-	mcp.setupInterruptPin(0, CHANGE);
-#ifdef SERIAL_DEBUG
-	Serial.println("Done...");
-#endif
-	pinMode(D4, INPUT);
-	digitalWrite(D4, INPUT_PULLUP);
-	SD.begin(chipSelectSD);
-
-	WiFi.setSleepMode(WIFI_LIGHT_SLEEP);
-#ifdef SERIAL_DEBUG
-	Serial.println("Configured sleep mode...");
-#endif
-}
-
 void setup() {
 	Serial.begin(115200);
 	rtc::rtc_sreg_t sr;
 	int query_sreg_bit = 0;
 	uint32_t rtc_time;
-
-	init_peripheral_system();
 
 	rtc_shield.start();
 
@@ -163,10 +120,7 @@ void setup() {
 //	web_content.setHVal(humidity);
 //	server.handleClient();
 
-	pinval = mcp.readGPIOAB();
-
-	Serial.print("Pinval: ");
-	Serial.println(pinval);
+	//pinval = mcp.readGPIOAB();
 
 	yield();
 	delay(100);

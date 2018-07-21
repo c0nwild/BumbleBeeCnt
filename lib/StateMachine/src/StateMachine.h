@@ -11,8 +11,6 @@
 #include <stdio.h>
 #include "EventData.h"
 
-namespace sm {
-
 struct StateStruct;
 
 class StateMachine {
@@ -47,7 +45,7 @@ const StateStruct* GetStateMap() {\
     { reinterpret_cast<StateFunc>(entry) },
 
 #define END_STATE_MAP \
-    { reinterpret_cast<StateFunc>(NULL) }\
+    { NULL }\
     }; \
     return &StateMap[0]; }
 
@@ -60,7 +58,5 @@ const StateStruct* GetStateMap() {\
 #define END_TRANSITION_MAP(data) \
     0 };\
     ExternalEvent(TRANSITIONS[currentState], data);
-
-} /* namespace sm */
 
 #endif /* LIB_STATEMACHINE_SRC_STATEMACHINE_H_ */

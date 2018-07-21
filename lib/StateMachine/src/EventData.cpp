@@ -7,10 +7,8 @@
 
 #include "EventData.h"
 
-namespace sm {
 
 EventData::~EventData() {
 	// TODO Auto-generated destructor stub
 }
 
-} /* namespace sm */
