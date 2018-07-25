@@ -65,19 +65,7 @@ void BumbleBeeCnt::wakeup() {
 #endif
 	int sr_poweron = this->sreg.query_bit(RTC_SREG_BIT_POWERON);
 	this->sreg.unset_bit(RTC_SREG_BIT_POWERON);
-	unsigned char newState = 0;
-	switch (sr_poweron){
-	case 0:
-		newState = ST_INIT_PERIPHERALS;
-		break;
-	case 1:
-		newState = ST_READ_PERIPHERALS;
-		break;
-	default:
-		newState = ST_ERROR;
-		break;
-	}
-	InternalEvent(newState, NULL);
+	InternalEvent(ST_INIT_PERIPHERALS, NULL);
 }
 
 void BumbleBeeCnt::init_peripherals() {
