@@ -53,13 +53,14 @@ extern "C" {
 
 BumbleBeeCnt st_machine_hw_test;
 
-void trigger_st_machine(){
+void trigger_st_machine() {
 	st_machine_hw_test.trigger();
 }
 
 void setup() {
 	Serial.begin(115200);
 	attachInterrupt(digitalPinToInterrupt(D4), trigger_st_machine, FALLING);
+	trigger_st_machine();
 }
 
 void loop() {
