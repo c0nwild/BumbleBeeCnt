@@ -540,6 +540,7 @@
 									<listOptionValue builtIn="false" value="__UINT_FAST8_TYPE__=unsigned int"/>
 									<listOptionValue builtIn="false" value="__ATOMIC_ACQ_REL=4"/>
 									<listOptionValue builtIn="false" value="__ATOMIC_RELEASE=3"/>
+									<listOptionValue builtIn="false" value="SERIAL_DEBUG"/>
 								</option>
 								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.762536863" languageId="org.eclipse.cdt.core.g++" languageName="GNU C++" sourceContentType="org.eclipse.cdt.core.cxxSource,org.eclipse.cdt.core.cxxHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 							</tool>
