@@ -5,7 +5,7 @@
  *      Author: conradwild
  */
 
-#include "RTC.h"
+#include "SReg.h"
 #ifdef UNIT_TEST
 #include "SReg_test.h"
 using namespace rtc_test;

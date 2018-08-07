@@ -9,7 +9,7 @@
 #include <BumbleBeeCnt.h>
 #include "webcontent.h"
 
-#include "../lib/RTC/src/RTC.h"
+#include "../lib/RTC/src/SReg.h"
 
 extern "C" {
 #include "user_interface.h"
@@ -27,7 +27,7 @@ void trigger_st_machine() {
 
 void setup() {
 	Serial.begin(115200);
-	attachInterrupt(digitalPinToInterrupt(D4), trigger_st_machine, FALLING);
+	//attachInterrupt(digitalPinToInterrupt(D4), trigger_st_machine, FALLING);
 	trigger_st_machine();
 }
 
