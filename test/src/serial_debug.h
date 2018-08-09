@@ -10,7 +10,7 @@
 
 #ifdef SERIAL_DEBUG
 #define DEBUG_MSG(x) \
-		Serial.print(x, HEX);
+		Serial.println(x, HEX);
 #else
 #define DEBUG_MSG(x)
 #endif
@@ -24,9 +24,9 @@
 #define DEBUG_ID_ST_WAKEUP (0x101)
 #define DEBUG_ID_ST_INIT_PERIPHERALS (0x102)
 #define DEBUG_ID_ST_READ_PERIPHERALS (0x104)
-#define DEBUG_ID_ST_WRITE_TO_SD (0x108)
-#define DEBUG_ID_ST_PREPARE_SLEEP (0x110)
-#define DEBUG_ID_ST_GOTO_SLEEP (0x120)
-#define DEBUG_ID_ST_ERROR (0x140)
-
+#define DEBUG_ID_ST_EVAL_PERIPHERAL_DATA (0x108)
+#define DEBUG_ID_ST_WRITE_TO_SD (0x110)
+#define DEBUG_ID_ST_PREPARE_SLEEP (0x120)
+#define DEBUG_ID_ST_GOTO_SLEEP (0x140)
+#define DEBUG_ID_ST_ERROR (0x180)
 #endif /* TEST_SRC_SERIAL_DEBUG_H_ */

@@ -15,6 +15,9 @@
 #define MCP_GPIOA 0u
 #define MCP_GPIOB 1u
 
+#define MCP_LS0 0x20
+#define MCP_LS1 0x40
+
 #include <StateMachine.h>
 #include "../lib/RTC/src/SReg.h"
 #include "../lib/DataStore.h"
@@ -46,13 +49,13 @@ private:
 	void init_peripherals();
 	void read_peripherals();
 	void eval_peripheral_data(BumbleBeeCntData *p_data);
-	void write_to_sd();
+	void write_to_sd(BumbleBeeCntData *d);
 	void prepare_sleep();
 	void goto_sleep();
 	void error(BumbleBeeCntData *d);
 
 	int init_peripheral_system();
-	unsigned eval_peripheral_event(uint8_t mcp_gpioa, uint8_t mcp_gpiob);
+	void eval_peripheral_event(uint8_t mcp_gpioa);
 
 	BumbleBeeCntData ev_data;
 
@@ -92,9 +95,6 @@ private:
 
 	// Initialize Portexpander
 	Adafruit_MCP23017 mcp;
-
-	// Data storage
-	DataStore data_store;
 
 }; /* class BUmbleBeeCnt */
 

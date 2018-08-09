@@ -23,8 +23,8 @@ namespace rtc {
 
 #define RTC_SREG_BIT_POWERON 0x1
 #define RTC_SREG_BIT_SYSTEM_INIT 0x2
-#define RTC_SREG_BIT_MCP_GPIOA_EVENT 0x4
-#define RTC_SREG_BIT_MCP_GPIOB_EVENT 0x8
+#define RTC_SREG_BIT_LS0 0x4
+#define RTC_SREG_BIT_LS1 0x8
 
 typedef struct {
 	uint32_t sreg;
