@@ -10,13 +10,11 @@
 
 #define SERIAL_DEBUG
 
-#define DHTTYPE DHT22
-
 #define MCP_GPIOA 0u
 #define MCP_GPIOB 1u
 
-#define MCP_LS0 0x20
-#define MCP_LS1 0x40
+#define MCP_LB0 0x20
+#define MCP_LB1 0x40
 
 #include <StateMachine.h>
 #include "../lib/RTC/src/SReg.h"
@@ -24,23 +22,25 @@
 #include <Arduino.h>
 #include <Adafruit_MCP23017.h>
 #include <DS1307.h>
-#include <DHT.h>
+#include <DHTNew.h>
 #include <SD.h>
 #include <WiFiClient.h>
+
+#define DHTTYPE DHT22
 
 struct BumbleBeeCntData: public EventData {
 	String info;
 	float dht_humidity = 0;
 	float dht_temperature = 0;
-	uint8_t mcp_gpioa = 0;
-	uint8_t mcp_gpiob = 0;
+	uint8_t lb0 = 0;
+	uint8_t lb1 = 0;
+	uint16_t mcp_gpioab = 0;
 };
 
 class BumbleBeeCnt: public StateMachine {
 public:
 	BumbleBeeCnt() :
 			StateMachine(ST_MAX_STATES) {
-		dht = new DHT(DHTPin, DHTTYPE);
 	}
 	void trigger();
 private:
@@ -63,39 +63,41 @@ private:
 
 	const unsigned chipSelectSD = D8; //D8
 
-	BEGIN_STATE_MAP
-	STATE_MAP_ENTRY		(&BumbleBeeCnt::wakeup)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::init_peripherals)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::read_peripherals)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::eval_peripheral_data)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::write_to_sd)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::prepare_sleep)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::goto_sleep)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::error)
-	END_STATE_MAP
+BEGIN_STATE_MAP
+STATE_MAP_ENTRY		(&BumbleBeeCnt::wakeup)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::init_peripherals)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::read_peripherals)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::eval_peripheral_data)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::write_to_sd)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::prepare_sleep)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::goto_sleep)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::error)
+		END_STATE_MAP
 
-	enum states {
-		ST_WAKEUP = 0,
-		ST_INIT_PERIPHERALS,
-		ST_READ_PERIPHERALS,
-		ST_EVAL_PERIPHERAL_DATA,
-		ST_WRITE_TO_SD,
-		ST_PREPARE_SLEEP,
-		ST_GOTO_SLEEP,
-		ST_ERROR,
-		ST_MAX_STATES
-	};
+		enum states {
+			ST_WAKEUP = 0,
+			ST_INIT_PERIPHERALS,
+			ST_READ_PERIPHERALS,
+			ST_EVAL_PERIPHERAL_DATA,
+			ST_WRITE_TO_SD,
+			ST_PREPARE_SLEEP,
+			ST_GOTO_SLEEP,
+			ST_ERROR,
+			ST_MAX_STATES
+		};
 
-	rtc::SReg sreg;
+		rtc::SReg sreg;
 
-	// DHT Sensor
-	const int DHTPin = 0;
-	// Initialize DHT sensor.
-	DHT *dht;
+		// DHT Sensor
+		const unsigned DHTPin = D3;
+		DHT dht22;
 
-	// Initialize Portexpander
-	Adafruit_MCP23017 mcp;
+		//  Portexpander
+		Adafruit_MCP23017 mcp;
 
-}; /* class BUmbleBeeCnt */
+		// Real Time Clock
+		DS1307 ds1307;
+
+	}; /* class BUmbleBeeCnt */
 
 #endif /* SRC_BUMBLEBEECNT_H_ */

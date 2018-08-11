@@ -6,6 +6,7 @@
  */
 
 #include <BumbleBeeCnt.h>
+#include <time.h>
 
 #ifdef SERIAL_DEBUG
 #include "../test/src/serial_debug.h"
@@ -26,20 +27,16 @@ void BumbleBeeCnt::trigger() {
 int BumbleBeeCnt::init_peripheral_system() {
 	int retval = 0;
 
-
-	dht->begin();
+	dht22.begin(DHTPin, DHT_MODEL_DHT22);
 	DEBUG_MSG(DEBUG_ID_DHT22)
 
 	Wire.begin();
-#ifdef SERIAL_DEBUG
-	Serial.print("IOCONA ");
-	Serial.println(mcp.readRegister(MCP23017_IOCONA));
-#endif
+
 	//Only init once after power off.
 	if (!mcp.readRegister(MCP23017_IOCONA)) {
 		sreg.init();
 		mcp.begin();
-		for (int n = 0; n < 16; n++){
+		for (int n = 0; n < 16; n++) {
 			mcp.pullUp(n, LOW);
 		}
 		mcp.pullUp(7, HIGH);
@@ -48,10 +45,13 @@ int BumbleBeeCnt::init_peripheral_system() {
 		mcp.pullUp(0, HIGH);
 		for (int n = 0; n < 16; n++)
 			mcp.setupInterruptPin(n, CHANGE);
-		mcp.setupInterrupts(false, true, LOW);
+		mcp.setupInterrupts(true, true, LOW);
 
 		DEBUG_MSG(DEBUG_ID_MCP23017)
 	}
+
+	ds1307.set(0,0,0,11,8,2018);
+	ds1307.start();
 
 	pinMode(chipSelectSD, OUTPUT);
 	if (!SD.begin(chipSelectSD)) {
@@ -63,16 +63,7 @@ int BumbleBeeCnt::init_peripheral_system() {
 }
 
 void BumbleBeeCnt::eval_peripheral_event(uint8_t mcp_gpioa) {
-	//Check GPIOA
-	if (sreg.query_bit(RTC_SREG_BIT_LS0) == 0)
-		sreg.set_bit(RTC_SREG_BIT_LS0);
-	else
-		sreg.unset_bit(RTC_SREG_BIT_LS0);
-
-#ifdef SERIAL_DEBUG
-	Serial.print("sreg ");
-	Serial.println(sreg.query_bit(RTC_SREG_BIT_LS0));
-#endif
+	// data processing here
 }
 
 void BumbleBeeCnt::wakeup() {
@@ -102,28 +93,70 @@ void BumbleBeeCnt::init_peripherals() {
 void BumbleBeeCnt::read_peripherals() {
 	DEBUG_MSG(DEBUG_ID_ST_READ_PERIPHERALS)
 
+	bool rv;
 	BumbleBeeCntData* peripheral_data;
 	peripheral_data = new BumbleBeeCntData;
 
-	peripheral_data->dht_humidity = dht->readHumidity();
-	peripheral_data->dht_temperature = dht->readTemperature();
-	peripheral_data->mcp_gpioa = mcp.readGPIO(MCP_GPIOA);
+	rv = dht22.read();
 #ifdef SERIAL_DEBUG
-	Serial.print("GPIOA: ");
-	Serial.println(mcp.readGPIO(MCP_GPIOA), HEX);
+	Serial.print("dht: ");
+	Serial.println((rv)?"ok":"error");
+#endif
+
+	peripheral_data->dht_humidity = dht22.getHumidity();
+
+	peripheral_data->dht_temperature = dht22.getTemperature();
+	peripheral_data->mcp_gpioab = mcp.readGPIOAB();
+#ifdef SERIAL_DEBUG
+	Serial.print("DHT Hum: ");
+	Serial.println(peripheral_data->dht_humidity);
 #endif
 	InternalEvent(ST_EVAL_PERIPHERAL_DATA, peripheral_data);
 }
 
 void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 	DEBUG_MSG(DEBUG_ID_ST_EVAL_PERIPHERAL_DATA)
-	unsigned eval_out = 0;
-	eval_peripheral_event(p_data->mcp_gpioa);
+
+	char date_buffer[80];
+	struct tm t;
+	BumbleBeeCntData *d_out;
+	unsigned lb0 = (p_data->mcp_gpioab & MCP_LB0) ? 1 : 0;
+	unsigned lb1 = (p_data->mcp_gpioab & MCP_LB1) ? 1 : 0;
+
+	d_out = new BumbleBeeCntData;
+
 #ifdef SERIAL_DEBUG
-	Serial.print("eval_out: ");
-	Serial.println(eval_out, HEX);
+	Serial.print("LB0 ");
+	Serial.println(lb0);
+	Serial.print("LB1 ");
+	Serial.println(lb1);
+	Serial.print("GPIOAB: ");
+	Serial.println(mcp.readGPIOAB());
 #endif
-	InternalEvent(ST_WRITE_TO_SD); //string, den wir schreiben wollen konstruieren wir hier und übergeben ihn als event data.
+
+	ds1307.get(&t.tm_sec, &t.tm_min, &t.tm_hour, &t.tm_mday, &t.tm_mon,
+			&t.tm_year);
+	strftime(date_buffer, 80, "%F_%T", &t);
+
+	String date(date_buffer);
+	date += ",";
+	date += lb0;
+	date += ",";
+	date += lb1;
+	date += ",";
+	date += p_data->dht_humidity;
+	date += ",";
+	date += p_data->dht_temperature;
+
+	d_out->info = date;
+
+#ifdef SERIAL_DEBUG
+	Serial.println(date);
+#endif
+
+//	eval_peripheral_event(p_data->mcp_gpioa);
+
+	InternalEvent(ST_WRITE_TO_SD, d_out); //string, den wir schreiben wollen konstruieren wir hier und übergeben ihn als event data.
 }
 
 void BumbleBeeCnt::write_to_sd(BumbleBeeCntData* d) {
@@ -134,16 +167,17 @@ void BumbleBeeCnt::write_to_sd(BumbleBeeCntData* d) {
 	datafile = SD.open(data_file_name, FILE_WRITE);
 
 	if (datafile) {
-		datafile.println("test");
+		datafile.println(d->info);
 	} else {
 		ev_data.info = "SD IO-Error";
 		InternalEvent(ST_ERROR, &ev_data);
 	}
 	datafile.close();
-	InternalEvent(ST_GOTO_SLEEP, NULL);
+	InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
 
 void BumbleBeeCnt::prepare_sleep() {
+	InternalEvent(ST_GOTO_SLEEP, NULL);
 }
 
 void BumbleBeeCnt::goto_sleep() {
