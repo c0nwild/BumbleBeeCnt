@@ -16,7 +16,7 @@ DHT::DHT() {
 	_maxcycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for
 												   // reading pulses from DHT sensor.
 	// Note that count is now ignored as the DHT reading algorithm adjusts itself
-	// basd on the speed of the processor.
+	// based on the speed of the processor.
 }
 
 void DHT::begin(uint8_t pin, uint8_t type, uint8_t count) {
@@ -149,7 +149,7 @@ boolean DHT::read(bool force) {
 	// First set data line low for 20 milliseconds.
 	pinMode(_pin, OUTPUT);
 	digitalWrite(_pin, LOW);
-	delay(20);
+	delay(18);
 
 	uint32_t cycles[80];
 	{
@@ -158,8 +158,8 @@ boolean DHT::read(bool force) {
 		InterruptLock lock;
 
 		// End the start signal by setting data line high for 40 microseconds.
-//		digitalWrite(_pin, HIGH);
-//		delayMicroseconds(40);
+		digitalWrite(_pin, HIGH);
+		delayMicroseconds(30);
 
 		// Now start reading the data line to get the value from the DHT sensor.
 		pinMode(_pin, INPUT_PULLUP);

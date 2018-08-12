@@ -96,7 +96,7 @@ void BumbleBeeCnt::read_peripherals() {
 	BumbleBeeCntData* peripheral_data;
 	peripheral_data = new BumbleBeeCntData;
 
-	peripheral_data->dht_humidity = dht22.readHumidity();
+	peripheral_data->dht_humidity = dht22.readHumidity(true);
 
 	peripheral_data->dht_temperature = dht22.readTemperature();
 	peripheral_data->mcp_gpioab = mcp.readGPIOAB();
