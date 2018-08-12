@@ -22,11 +22,9 @@
 #include <Arduino.h>
 #include <Adafruit_MCP23017.h>
 #include <DS1307.h>
-#include <DHTNew.h>
+#include <DHT.h>
 #include <SD.h>
 #include <WiFiClient.h>
-
-#define DHTTYPE DHT22
 
 struct BumbleBeeCntData: public EventData {
 	String info;
@@ -90,6 +88,7 @@ STATE_MAP_ENTRY		(&BumbleBeeCnt::wakeup)
 
 		// DHT Sensor
 		const unsigned DHTPin = D3;
+
 		DHT dht22;
 
 		//  Portexpander

@@ -27,7 +27,7 @@ void BumbleBeeCnt::trigger() {
 int BumbleBeeCnt::init_peripheral_system() {
 	int retval = 0;
 
-	dht22.begin(DHTPin, DHT_MODEL_DHT22);
+	dht22.begin(DHTPin, DHT22);
 	DEBUG_MSG(DEBUG_ID_DHT22)
 
 	Wire.begin();
@@ -50,7 +50,7 @@ int BumbleBeeCnt::init_peripheral_system() {
 		DEBUG_MSG(DEBUG_ID_MCP23017)
 	}
 
-	ds1307.set(0,0,0,11,8,2018);
+	ds1307.set(0,0,0,11,8,18);
 	ds1307.start();
 
 	pinMode(chipSelectSD, OUTPUT);
@@ -93,19 +93,12 @@ void BumbleBeeCnt::init_peripherals() {
 void BumbleBeeCnt::read_peripherals() {
 	DEBUG_MSG(DEBUG_ID_ST_READ_PERIPHERALS)
 
-	bool rv;
 	BumbleBeeCntData* peripheral_data;
 	peripheral_data = new BumbleBeeCntData;
 
-	rv = dht22.read();
-#ifdef SERIAL_DEBUG
-	Serial.print("dht: ");
-	Serial.println((rv)?"ok":"error");
-#endif
+	peripheral_data->dht_humidity = dht22.readHumidity();
 
-	peripheral_data->dht_humidity = dht22.getHumidity();
-
-	peripheral_data->dht_temperature = dht22.getTemperature();
+	peripheral_data->dht_temperature = dht22.readTemperature();
 	peripheral_data->mcp_gpioab = mcp.readGPIOAB();
 #ifdef SERIAL_DEBUG
 	Serial.print("DHT Hum: ");
@@ -156,7 +149,8 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 //	eval_peripheral_event(p_data->mcp_gpioa);
 
-	InternalEvent(ST_WRITE_TO_SD, d_out); //string, den wir schreiben wollen konstruieren wir hier und übergeben ihn als event data.
+//	InternalEvent(ST_WRITE_TO_SD, d_out); //string, den wir schreiben wollen konstruieren wir hier und übergeben ihn als event data.
+	InternalEvent(ST_PREPARE_SLEEP, d_out);
 }
 
 void BumbleBeeCnt::write_to_sd(BumbleBeeCntData* d) {
@@ -184,7 +178,7 @@ void BumbleBeeCnt::goto_sleep() {
 #ifdef SERIAL_DEBUG
 	Serial.println("State goto_sleep...");
 #endif
-	ESP.deepSleep(30E6);
+	ESP.deepSleep(5E6);
 //	delay(1000);
 //	ESP.restart();
 }
