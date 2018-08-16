@@ -22,7 +22,6 @@
 #include <Arduino.h>
 #include <Adafruit_MCP23017.h>
 #include <DS1307.h>
-#include <DHT.h>
 #include <SD.h>
 #include <WiFiClient.h>
 #include <BME280I2C.h>
