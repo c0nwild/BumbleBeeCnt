@@ -16,7 +16,7 @@
 #endif
 
 //Debug ID´s for peripheral hardware
-#define DEBUG_ID_DHT22 (0x1)
+#define DEBUG_ID_BME280 (0x1)
 #define DEBUG_ID_MCP23017 (0x2)
 #define DEBUG_ID_SD (0x4)
 

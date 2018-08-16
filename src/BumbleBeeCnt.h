@@ -25,11 +25,12 @@
 #include <DHT.h>
 #include <SD.h>
 #include <WiFiClient.h>
+#include <BME280I2C.h>
 
 struct BumbleBeeCntData: public EventData {
 	String info;
-	float dht_humidity = 0;
-	float dht_temperature = 0;
+	float humidity = 0;
+	float temperature = 0;
 	uint8_t lb0 = 0;
 	uint8_t lb1 = 0;
 	uint16_t mcp_gpioab = 0;
@@ -86,10 +87,8 @@ STATE_MAP_ENTRY		(&BumbleBeeCnt::wakeup)
 
 		rtc::SReg sreg;
 
-		// DHT Sensor
-		const unsigned DHTPin = D3;
-
-		DHT dht22;
+		//BME280
+		BME280I2C bme;
 
 		//  Portexpander
 		Adafruit_MCP23017 mcp;

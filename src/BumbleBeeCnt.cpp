@@ -27,9 +27,10 @@ void BumbleBeeCnt::trigger() {
 int BumbleBeeCnt::init_peripheral_system() {
 	int retval = 0;
 
-	dht22.begin(DHTPin, DHT22);
-	DEBUG_MSG(DEBUG_ID_DHT22)
-
+	if (!bme.begin())
+		retval = -DEBUG_ID_BME280;
+	else
+		DEBUG_MSG(DEBUG_ID_BME280);
 	Wire.begin();
 
 	//Only init once after power off.
@@ -96,13 +97,13 @@ void BumbleBeeCnt::read_peripherals() {
 	BumbleBeeCntData* peripheral_data;
 	peripheral_data = new BumbleBeeCntData;
 
-	peripheral_data->dht_humidity = dht22.readHumidity(true);
+	peripheral_data->temperature = bme.temp();
+	peripheral_data->humidity = bme.hum();
 
-	peripheral_data->dht_temperature = dht22.readTemperature();
 	peripheral_data->mcp_gpioab = mcp.readGPIOAB();
 #ifdef SERIAL_DEBUG
-	Serial.print("DHT Hum: ");
-	Serial.println(peripheral_data->dht_humidity);
+	Serial.print("Hum: ");
+	Serial.println(bme.hum());
 #endif
 	InternalEvent(ST_EVAL_PERIPHERAL_DATA, peripheral_data);
 }
@@ -137,9 +138,9 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 	date += ",";
 	date += lb1;
 	date += ",";
-	date += p_data->dht_humidity;
+	date += p_data->humidity;
 	date += ",";
-	date += p_data->dht_temperature;
+	date += p_data->temperature;
 
 	d_out->info = date;
 
