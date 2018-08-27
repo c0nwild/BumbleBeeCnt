@@ -21,7 +21,7 @@
 #include "../lib/DataStore.h"
 #include <Arduino.h>
 #include <Adafruit_MCP23017.h>
-#include <DS1307.h>
+#include "../lib/Ds1307/Ds1307.h"
 #include <SD.h>
 #include <WiFiClient.h>
 #include <BME280I2C.h>
@@ -30,6 +30,7 @@ struct BumbleBeeCntData: public EventData {
 	String info;
 	float humidity = 0;
 	float temperature = 0;
+	float pressure = 0;
 	uint8_t lb0 = 0;
 	uint8_t lb1 = 0;
 	uint16_t mcp_gpioab = 0;
@@ -93,7 +94,7 @@ STATE_MAP_ENTRY		(&BumbleBeeCnt::wakeup)
 		Adafruit_MCP23017 mcp;
 
 		// Real Time Clock
-		DS1307 ds1307;
+		Ds1307 ds1307;
 
 	}; /* class BUmbleBeeCnt */
 

@@ -26,12 +26,22 @@ void BumbleBeeCnt::trigger() {
 
 int BumbleBeeCnt::init_peripheral_system() {
 	int retval = 0;
+	Ds1307::DateTime init_date = {
+			18,
+			9,
+			11,
+			0,
+			0,
+			0,
+			0
+	};
+
+	Wire.begin();
 
 	if (!bme.begin())
 		retval = -DEBUG_ID_BME280;
 	else
 		DEBUG_MSG(DEBUG_ID_BME280);
-	Wire.begin();
 
 	//Only init once after power off.
 	if (!mcp.readRegister(MCP23017_IOCONA)) {
@@ -51,8 +61,7 @@ int BumbleBeeCnt::init_peripheral_system() {
 		DEBUG_MSG(DEBUG_ID_MCP23017)
 	}
 
-	ds1307.set(0,0,0,11,8,18);
-	ds1307.start();
+	ds1307.setDateTime(&init_date);
 
 	pinMode(chipSelectSD, OUTPUT);
 	if (!SD.begin(chipSelectSD)) {
@@ -99,6 +108,7 @@ void BumbleBeeCnt::read_peripherals() {
 
 	peripheral_data->temperature = bme.temp();
 	peripheral_data->humidity = bme.hum();
+	peripheral_data->pressure = bme.pres();
 
 	peripheral_data->mcp_gpioab = mcp.readGPIOAB();
 #ifdef SERIAL_DEBUG
@@ -119,6 +129,8 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 	d_out = new BumbleBeeCntData;
 
+	Ds1307::DateTime dt;
+
 #ifdef SERIAL_DEBUG
 	Serial.print("LB0 ");
 	Serial.println(lb0);
@@ -128,8 +140,15 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 	Serial.println(mcp.readGPIOAB());
 #endif
 
-	ds1307.get(&t.tm_sec, &t.tm_min, &t.tm_hour, &t.tm_mday, &t.tm_mon,
-			&t.tm_year);
+	ds1307.getDateTime(&dt);
+
+	t.tm_hour = dt.hour;
+	t.tm_min = dt.minute;
+	t.tm_sec = dt.second;
+	t.tm_year = dt.year + 100;
+	t.tm_mon = dt.month;
+	t.tm_mday = dt.day;
+
 	strftime(date_buffer, 80, "%F_%T", &t);
 
 	String date(date_buffer);
@@ -141,6 +160,8 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 	date += p_data->humidity;
 	date += ",";
 	date += p_data->temperature;
+	date += ",";
+	date += p_data->pressure;
 
 	d_out->info = date;
 
@@ -179,9 +200,10 @@ void BumbleBeeCnt::goto_sleep() {
 #ifdef SERIAL_DEBUG
 	Serial.println("State goto_sleep...");
 #endif
-	ESP.deepSleep(5E6);
-//	delay(1000);
+//	ESP.deepSleep(5E6);
+	delay(1000);
 //	ESP.restart();
+	InternalEvent(ST_READ_PERIPHERALS, NULL);
 }
 
 void BumbleBeeCnt::error(BumbleBeeCntData *d) {
