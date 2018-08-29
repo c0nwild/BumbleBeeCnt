@@ -63,6 +63,10 @@ int BumbleBeeCnt::init_peripheral_system() {
 
 	ds1307.setDateTime(&init_date);
 
+	scale.begin();
+	scale.start(2000);
+	scale.setCalFactor(900.0);
+
 	pinMode(chipSelectSD, OUTPUT);
 	if (!SD.begin(chipSelectSD)) {
 		retval |= -DEBUG_ID_SD;
@@ -76,6 +80,8 @@ void BumbleBeeCnt::do_tare() {
 #ifdef SERIAL_DEBUG
 	Serial.println("Tare...");
 #endif
+	scale.tare();
+	InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
 
 void BumbleBeeCnt::eval_peripheral_event(uint8_t mcp_gpioa) {
@@ -117,10 +123,10 @@ void BumbleBeeCnt::read_peripherals() {
 	peripheral_data->pressure = bme.pres();
 
 	peripheral_data->mcp_gpioab = mcp.readGPIOAB();
-#ifdef SERIAL_DEBUG
-	Serial.print("Hum: ");
-	Serial.println(bme.hum());
-#endif
+
+	scale.update();
+	peripheral_data->weight = scale.getData();
+
 	InternalEvent(ST_EVAL_PERIPHERAL_DATA, peripheral_data);
 }
 
@@ -170,6 +176,8 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 	date += p_data->temperature;
 	date += ",";
 	date += p_data->pressure;
+	date += ",";
+	date += p_data->weight;
 
 	*d_out = *p_data;
 	d_out->info = date;
@@ -177,14 +185,15 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 #ifdef SERIAL_DEBUG
 	Serial.println(date);
 #endif
-
+//  Wird für Schreibvorgang auf SD benötigt. delete d_out muss dann wieder weg.
+	delete d_out;
 //	eval_peripheral_event(p_data->mcp_gpioa);
 
 //	InternalEvent(ST_WRITE_TO_SD, d_out); //string, den wir schreiben wollen konstruieren wir hier und übergeben ihn als event data.
 	if(p_data->tare)
 		InternalEvent(ST_TARE, NULL);
 	else
-		InternalEvent(ST_PREPARE_SLEEP, d_out);
+		InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
 
 void BumbleBeeCnt::write_to_sd(BumbleBeeCntData* d) {

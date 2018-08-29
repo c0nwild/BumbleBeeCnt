@@ -27,12 +27,14 @@
 #include <SD.h>
 #include <WiFiClient.h>
 #include <BME280I2C.h>
+#include <HX711_ADC.h>
 
 struct BumbleBeeCntData: public EventData {
 	String info;
 	float humidity = 0;
 	float temperature = 0;
 	float pressure = 0;
+	float weight = 0;
 	uint8_t lb0 = 0;
 	uint8_t lb1 = 0;
 	uint8_t wlan_en = 0;
@@ -102,6 +104,9 @@ STATE_MAP_ENTRY		(&BumbleBeeCnt::wakeup)
 
 		// Real Time Clock
 		Ds1307 ds1307;
+
+		//Scale
+		HX711_ADC scale;
 
 	}; /* class BUmbleBeeCnt */
 
