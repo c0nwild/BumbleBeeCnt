@@ -72,6 +72,12 @@ int BumbleBeeCnt::init_peripheral_system() {
 	return retval;
 }
 
+void BumbleBeeCnt::do_tare() {
+#ifdef SERIAL_DEBUG
+	Serial.println("Tare...");
+#endif
+}
+
 void BumbleBeeCnt::eval_peripheral_event(uint8_t mcp_gpioa) {
 	// data processing here
 }
@@ -124,8 +130,10 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 	char date_buffer[80];
 	struct tm t;
 	BumbleBeeCntData *d_out;
-	unsigned lb0 = (p_data->mcp_gpioab & MCP_LB0) ? 1 : 0;
-	unsigned lb1 = (p_data->mcp_gpioab & MCP_LB1) ? 1 : 0;
+	p_data->lb0 = (p_data->mcp_gpioab & MCP_LB0) ? 1 : 0;
+	p_data->lb1 = (p_data->mcp_gpioab & MCP_LB1) ? 1 : 0;
+	p_data->wlan_en = (p_data->mcp_gpioab & MCP_WLAN_EN) ? 1 : 0;
+	p_data->tare = (p_data->mcp_gpioab & MCP_TARE) ? 1 : 0;
 
 	d_out = new BumbleBeeCntData;
 
@@ -133,11 +141,11 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 #ifdef SERIAL_DEBUG
 	Serial.print("LB0 ");
-	Serial.println(lb0);
+	Serial.println(p_data->lb0);
 	Serial.print("LB1 ");
-	Serial.println(lb1);
+	Serial.println(p_data->lb0);
 	Serial.print("GPIOAB: ");
-	Serial.println(mcp.readGPIOAB());
+	Serial.println(p_data->mcp_gpioab, HEX);
 #endif
 
 	ds1307.getDateTime(&dt);
@@ -153,9 +161,9 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 	String date(date_buffer);
 	date += ",";
-	date += lb0;
+	date += p_data->lb0;
 	date += ",";
-	date += lb1;
+	date += p_data->lb1;
 	date += ",";
 	date += p_data->humidity;
 	date += ",";
@@ -163,6 +171,7 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 	date += ",";
 	date += p_data->pressure;
 
+	*d_out = *p_data;
 	d_out->info = date;
 
 #ifdef SERIAL_DEBUG
@@ -172,7 +181,10 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 //	eval_peripheral_event(p_data->mcp_gpioa);
 
 //	InternalEvent(ST_WRITE_TO_SD, d_out); //string, den wir schreiben wollen konstruieren wir hier und übergeben ihn als event data.
-	InternalEvent(ST_PREPARE_SLEEP, d_out);
+	if(p_data->tare)
+		InternalEvent(ST_TARE, NULL);
+	else
+		InternalEvent(ST_PREPARE_SLEEP, d_out);
 }
 
 void BumbleBeeCnt::write_to_sd(BumbleBeeCntData* d) {

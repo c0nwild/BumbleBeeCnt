@@ -15,6 +15,8 @@
 
 #define MCP_LB0 0x20
 #define MCP_LB1 0x40
+#define MCP_WLAN_EN 0x1
+#define MCP_TARE 0x80
 
 #include <StateMachine.h>
 #include "../lib/RTC/src/SReg.h"
@@ -33,6 +35,8 @@ struct BumbleBeeCntData: public EventData {
 	float pressure = 0;
 	uint8_t lb0 = 0;
 	uint8_t lb1 = 0;
+	uint8_t wlan_en = 0;
+	uint8_t tare = 0;
 	uint16_t mcp_gpioab = 0;
 };
 
@@ -48,6 +52,7 @@ private:
 	void init_peripherals();
 	void read_peripherals();
 	void eval_peripheral_data(BumbleBeeCntData *p_data);
+	void do_tare();
 	void write_to_sd(BumbleBeeCntData *d);
 	void prepare_sleep();
 	void goto_sleep();
@@ -67,6 +72,7 @@ STATE_MAP_ENTRY		(&BumbleBeeCnt::wakeup)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::init_peripherals)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::read_peripherals)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::eval_peripheral_data)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::do_tare)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::write_to_sd)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::prepare_sleep)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::goto_sleep)
@@ -78,6 +84,7 @@ STATE_MAP_ENTRY		(&BumbleBeeCnt::wakeup)
 			ST_INIT_PERIPHERALS,
 			ST_READ_PERIPHERALS,
 			ST_EVAL_PERIPHERAL_DATA,
+			ST_TARE,
 			ST_WRITE_TO_SD,
 			ST_PREPARE_SLEEP,
 			ST_GOTO_SLEEP,
