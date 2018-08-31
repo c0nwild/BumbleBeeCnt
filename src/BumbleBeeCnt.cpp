@@ -26,15 +26,7 @@ void BumbleBeeCnt::trigger() {
 
 int BumbleBeeCnt::init_peripheral_system() {
 	int retval = 0;
-	Ds1307::DateTime init_date = {
-			18,
-			9,
-			11,
-			0,
-			0,
-			0,
-			0
-	};
+	Ds1307::DateTime init_date = { 18, 9, 11, 0, 0, 0, 0 };
 
 	Wire.begin();
 
@@ -49,10 +41,15 @@ int BumbleBeeCnt::init_peripheral_system() {
 		mcp.begin();
 		for (int n = 0; n < 16; n++) {
 			mcp.pullUp(n, LOW);
+			mcp.pinMode(n, OUTPUT);
 		}
+		mcp.pinMode(7, INPUT);
 		mcp.pullUp(7, HIGH);
+		mcp.pinMode(6, INPUT);
 		mcp.pullUp(6, HIGH);
+		mcp.pinMode(5, INPUT);
 		mcp.pullUp(5, HIGH);
+		mcp.pinMode(0,INPUT);
 		mcp.pullUp(0, HIGH);
 		for (int n = 0; n < 16; n++)
 			mcp.setupInterruptPin(n, CHANGE);
@@ -63,9 +60,12 @@ int BumbleBeeCnt::init_peripheral_system() {
 
 	ds1307.setDateTime(&init_date);
 
-	scale.begin();
-	scale.start(2000);
-	scale.setCalFactor(900.0);
+	scale.set_scale(2280.f); // this value is obtained by calibrating the scale with known weights; see the README for details
+	scale.tare();				        // reset the scale to 0
+
+	Serial.print("get units: \t\t");
+	Serial.println(scale.get_units(5), 1); // print the average of 5 readings from the ADC minus tare weight, divided
+	// by the SCALE parameter set with set_scale
 
 	pinMode(chipSelectSD, OUTPUT);
 	if (!SD.begin(chipSelectSD)) {
@@ -90,6 +90,10 @@ void BumbleBeeCnt::eval_peripheral_event(uint8_t mcp_gpioa) {
 
 void BumbleBeeCnt::wakeup() {
 	DEBUG_MSG(DEBUG_ID_ST_WAKEUP)
+	/* TODO: Hier den Attiny 88 über I2C abfragen, solange keine Freigabe vom Wemos erfolgt
+	 * darf der Tiny keinen Reset durchführen.
+	 */
+
 	InternalEvent(ST_INIT_PERIPHERALS, NULL);
 }
 
@@ -124,8 +128,7 @@ void BumbleBeeCnt::read_peripherals() {
 
 	peripheral_data->mcp_gpioab = mcp.readGPIOAB();
 
-	scale.update();
-	peripheral_data->weight = scale.getData();
+	peripheral_data->weight = scale.get_units(5);
 
 	InternalEvent(ST_EVAL_PERIPHERAL_DATA, peripheral_data);
 }
@@ -149,9 +152,9 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 	Serial.print("LB0 ");
 	Serial.println(p_data->lb0);
 	Serial.print("LB1 ");
-	Serial.println(p_data->lb0);
-	Serial.print("GPIOAB: ");
-	Serial.println(p_data->mcp_gpioab, HEX);
+	Serial.println(p_data->lb1);
+	Serial.print("GPIOAB: 0b");
+	Serial.println(p_data->mcp_gpioab, BIN);
 #endif
 
 	ds1307.getDateTime(&dt);
@@ -185,12 +188,12 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 #ifdef SERIAL_DEBUG
 	Serial.println(date);
 #endif
-//  Wird für Schreibvorgang auf SD benötigt. delete d_out muss dann wieder weg.
+//  TODO: Wird für Schreibvorgang auf SD benötigt. delete d_out muss dann wieder weg.
 	delete d_out;
 //	eval_peripheral_event(p_data->mcp_gpioa);
 
 //	InternalEvent(ST_WRITE_TO_SD, d_out); //string, den wir schreiben wollen konstruieren wir hier und übergeben ihn als event data.
-	if(p_data->tare)
+	if (p_data->tare)
 		InternalEvent(ST_TARE, NULL);
 	else
 		InternalEvent(ST_PREPARE_SLEEP, NULL);
@@ -215,6 +218,7 @@ void BumbleBeeCnt::write_to_sd(BumbleBeeCntData* d) {
 
 void BumbleBeeCnt::prepare_sleep() {
 	InternalEvent(ST_GOTO_SLEEP, NULL);
+	//TODO: Hier dem ATTiny 88 über i2c bescheid geben, dass er wieder resetten darf.
 }
 
 void BumbleBeeCnt::goto_sleep() {
