@@ -20,7 +20,7 @@
 
 #include <StateMachine.h>
 #include "../lib/RTC/src/SReg.h"
-#include "../lib/DataStore.h"
+#include "../lib/DataStore/DataStore.h"
 #include <Arduino.h>
 #include <Adafruit_MCP23017.h>
 #include "../lib/Ds1307/Ds1307.h"

@@ -121,12 +121,8 @@ void BumbleBeeCnt::read_peripherals() {
 
 	peripheral_data->mcp_gpioab = mcp.readGPIOAB();
 
-<<<<<<< HEAD
 //	scale.update();
 //	peripheral_data->weight = scale.getData();
-=======
-	peripheral_data->weight = scale.get_units(5);
->>>>>>> branch 'hardware_test' of ssh://cwild@192.168.189.57/home/cwild/jenkins/git/esp8266.git
 
 	InternalEvent(ST_EVAL_PERIPHERAL_DATA, peripheral_data);
 }
