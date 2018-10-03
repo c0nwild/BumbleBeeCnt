@@ -27,7 +27,7 @@
 #include <SD.h>
 #include <WiFiClient.h>
 #include <BME280I2C.h>
-#include <HX711_ADC.h>
+#include <HX711.h>
 
 struct BumbleBeeCntData: public EventData {
 	String info;
@@ -106,7 +106,7 @@ STATE_MAP_ENTRY		(&BumbleBeeCnt::wakeup)
 		Ds1307 ds1307;
 
 		//Scale
-		HX711_ADC scale;
+		HX711 scale;
 
 	}; /* class BUmbleBeeCnt */
 

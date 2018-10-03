@@ -22,8 +22,6 @@ void trigger_st_machine() {
 
 void setup() {
 	Serial.begin(115200);
-	//attachInterrupt(digitalPinToInterrupt(D4), trigger_st_machine, FALLING);
-
 }
 
 void loop() {
