@@ -63,9 +63,9 @@ int BumbleBeeCnt::init_peripheral_system() {
 
 	ds1307.setDateTime(&init_date);
 
-	scale.begin();
-	scale.start(2000);
-	scale.setCalFactor(900.0);
+//	scale.begin();
+//	scale.start(2000);
+//	scale.setCalFactor(900.0);
 
 	pinMode(chipSelectSD, OUTPUT);
 	if (!SD.begin(chipSelectSD)) {
@@ -124,8 +124,8 @@ void BumbleBeeCnt::read_peripherals() {
 
 	peripheral_data->mcp_gpioab = mcp.readGPIOAB();
 
-	scale.update();
-	peripheral_data->weight = scale.getData();
+//	scale.update();
+//	peripheral_data->weight = scale.getData();
 
 	InternalEvent(ST_EVAL_PERIPHERAL_DATA, peripheral_data);
 }
