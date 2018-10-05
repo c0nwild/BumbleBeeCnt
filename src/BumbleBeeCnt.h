@@ -67,6 +67,8 @@ private:
 
 	String data_file_name = "data.txt";
 
+	char i2c_reg;
+
 	const unsigned chipSelectSD = D8; //D8
 
 BEGIN_STATE_MAP

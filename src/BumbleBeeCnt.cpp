@@ -86,6 +86,11 @@ void BumbleBeeCnt::wakeup() {
 	/* TODO: Hier den Attiny 88 über I2C abfragen, solange keine Freigabe vom Wemos erfolgt
 	 * darf der Tiny keinen Reset durchführen.
 	 */
+	int addr = 0x47;
+	Wire.begin();
+	Wire.requestFrom(addr,1);
+	while(Wire.available())
+		i2c_reg=Wire.read();
 
 	InternalEvent(ST_INIT_PERIPHERALS, NULL);
 }
@@ -123,6 +128,11 @@ void BumbleBeeCnt::read_peripherals() {
 
 //	scale.update();
 //	peripheral_data->weight = scale.getData();
+#ifdef SERIAL_DEBUG
+	Serial.print("I2CREG: 0x");
+	Serial.print(i2c_reg, HEX);
+	Serial.println();
+#endif
 
 	InternalEvent(ST_EVAL_PERIPHERAL_DATA, peripheral_data);
 }
