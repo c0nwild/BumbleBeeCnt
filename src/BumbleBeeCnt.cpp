@@ -8,9 +8,7 @@
 #include <BumbleBeeCnt.h>
 #include <time.h>
 
-#ifdef SERIAL_DEBUG
 #include "../test/src/serial_debug.h"
-#endif
 
 void BumbleBeeCnt::trigger() {
 	ExternalEvent(ST_WAKEUP);
@@ -24,9 +22,23 @@ void BumbleBeeCnt::trigger() {
 //	END_TRANSITION_MAP(NULL)
 }
 
-int BumbleBeeCnt::init_peripheral_system() {
+int BumbleBeeCnt::init_peripheral_system_once() {
 	int retval = 0;
 	Ds1307::DateTime init_date = { 18, 9, 11, 0, 0, 0, 0 };
+
+	ds1307.setDateTime(&init_date);
+
+	pinMode(chipSelectSD, OUTPUT);
+	if (!SD.begin(chipSelectSD)) {
+		retval |= -DEBUG_ID_SD;
+	} else {
+		DEBUG_MSG(DEBUG_ID_SD)
+	}
+	return retval;
+}
+
+int BumbleBeeCnt::init_peripheral_system() {
+	int retval = 0;
 
 	Wire.begin();
 
@@ -49,7 +61,7 @@ int BumbleBeeCnt::init_peripheral_system() {
 		mcp.pullUp(6, HIGH);
 		mcp.pinMode(5, INPUT);
 		mcp.pullUp(5, HIGH);
-		mcp.pinMode(0,INPUT);
+		mcp.pinMode(0, INPUT);
 		mcp.pullUp(0, HIGH);
 		for (int n = 0; n < 16; n++)
 			mcp.setupInterruptPin(n, CHANGE);
@@ -58,14 +70,6 @@ int BumbleBeeCnt::init_peripheral_system() {
 		DEBUG_MSG(DEBUG_ID_MCP23017)
 	}
 
-	ds1307.setDateTime(&init_date);
-
-	pinMode(chipSelectSD, OUTPUT);
-	if (!SD.begin(chipSelectSD)) {
-		retval |= -DEBUG_ID_SD;
-	} else {
-		DEBUG_MSG(DEBUG_ID_SD)
-	}
 	return retval;
 }
 
@@ -77,6 +81,10 @@ void BumbleBeeCnt::do_tare() {
 	InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
 
+void BumbleBeeCnt::weight_meas() {
+
+}
+
 void BumbleBeeCnt::eval_peripheral_event(uint8_t mcp_gpioa) {
 	// data processing here
 }
@@ -86,11 +94,39 @@ void BumbleBeeCnt::wakeup() {
 	/* TODO: Hier den Attiny 88 über I2C abfragen, solange keine Freigabe vom Wemos erfolgt
 	 * darf der Tiny keinen Reset durchführen.
 	 */
-	int addr = 0x47;
+	int addr = sysdefs::res_ctrl::i2c_addr;
+
+	//get sreg from reset controller
 	Wire.begin();
-	Wire.requestFrom(addr,1);
-	while(Wire.available())
-		i2c_reg=Wire.read();
+	Wire.requestFrom(addr, 1);
+	while (Wire.available()) {
+		i2c_reg = Wire.read();
+	}
+	Wire.endTransmission(true);
+
+#ifdef SERIAL_DEBUG
+	String src;
+	if (i2c_reg & sysdefs::res_ctrl::int_src_esp)
+		src = "ESP";
+	else if (i2c_reg & sysdefs::res_ctrl::int_src_mcp)
+		src = "MCP";
+	else
+		src = "undef";
+
+	Serial.print("I2CREG: 0x");
+	Serial.print(i2c_reg);
+	Serial.println();
+	Serial.print("SRC: ");
+	Serial.print(src);
+	Serial.println();
+#endif
+
+	i2c_reg &= ~(sysdefs::res_ctrl::int_src_esp
+			| sysdefs::res_ctrl::int_src_mcp);
+	Wire.begin();
+	Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
+	Wire.write(i2c_reg);
+	Wire.endTransmission(true);
 
 	InternalEvent(ST_INIT_PERIPHERALS, NULL);
 }
@@ -103,13 +139,23 @@ void BumbleBeeCnt::init_peripherals() {
 	BumbleBeeCntData *data;
 
 	retval = init_peripheral_system();
+
+	if (!(i2c_reg & sysdefs::res_ctrl::sys_initialized))
+		retval |= init_peripheral_system_once();
+
 	if (retval < 0) {
 		next_state = ST_ERROR;
 		data = new BumbleBeeCntData;
-		data->info = "init_peripheral_system";
+		data->info = "init_peripherals failed";
 	} else {
 		next_state = ST_READ_PERIPHERALS;
 		data = NULL;
+
+		i2c_reg |= sysdefs::res_ctrl::sys_initialized;
+		Wire.begin();
+		Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
+		Wire.write(i2c_reg);
+		Wire.endTransmission(true);
 	}
 	InternalEvent(next_state, data);
 }
@@ -126,13 +172,9 @@ void BumbleBeeCnt::read_peripherals() {
 
 	peripheral_data->mcp_gpioab = mcp.readGPIOAB();
 
-//	scale.update();
-//	peripheral_data->weight = scale.getData();
-#ifdef SERIAL_DEBUG
-	Serial.print("I2CREG: 0x");
-	Serial.print(i2c_reg, HEX);
-	Serial.println();
-#endif
+	//Weight measurement after fixed time intervals
+	if(i2c_reg & sysdefs::res_ctrl::int_src_esp)
+		weight_meas();
 
 	InternalEvent(ST_EVAL_PERIPHERAL_DATA, peripheral_data);
 }
@@ -223,16 +265,21 @@ void BumbleBeeCnt::write_to_sd(BumbleBeeCntData* d) {
 void BumbleBeeCnt::prepare_sleep() {
 	InternalEvent(ST_GOTO_SLEEP, NULL);
 	//TODO: Hier dem ATTiny 88 über i2c bescheid geben, dass er wieder resetten darf.
+	i2c_reg |= sysdefs::res_ctrl::allowreset;
+	Wire.begin();
+	Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
+	Wire.write(i2c_reg);
+	Wire.endTransmission(true);
 }
 
 void BumbleBeeCnt::goto_sleep() {
 #ifdef SERIAL_DEBUG
 	Serial.println("State goto_sleep...");
 #endif
-//	ESP.deepSleep(5E6);
-	delay(1000);
+	ESP.deepSleep(60E6);
+//	delay(1000);
 //	ESP.restart();
-	InternalEvent(ST_READ_PERIPHERALS, NULL);
+//	InternalEvent(ST_WAKEUP, NULL);
 }
 
 void BumbleBeeCnt::error(BumbleBeeCntData *d) {
@@ -240,4 +287,6 @@ void BumbleBeeCnt::error(BumbleBeeCntData *d) {
 	Serial.print("ERROR --- ");
 	Serial.println(d->info);
 #endif
+	while (1)
+		;
 }

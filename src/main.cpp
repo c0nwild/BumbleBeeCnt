@@ -12,8 +12,6 @@ extern "C" {
 
 #include <DateTime.h>
 
-#define SERIAL_DEBUG
-
 BumbleBeeCnt st_machine_hw_test;
 
 void trigger_st_machine() {
@@ -21,7 +19,9 @@ void trigger_st_machine() {
 }
 
 void setup() {
+#ifdef SERIAL_DEBUG
 	Serial.begin(115200);
+#endif
 }
 
 void loop() {

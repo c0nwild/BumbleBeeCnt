@@ -28,6 +28,7 @@
 #include <WiFiClient.h>
 #include <BME280I2C.h>
 #include <HX711.h>
+#include "system_definitions.h"
 
 struct BumbleBeeCntData: public EventData {
 	String info;
@@ -53,6 +54,7 @@ private:
 	void wakeup();
 	void init_peripherals();
 	void read_peripherals();
+	void weight_meas();
 	void eval_peripheral_data(BumbleBeeCntData *p_data);
 	void do_tare();
 	void write_to_sd(BumbleBeeCntData *d);
@@ -61,13 +63,14 @@ private:
 	void error(BumbleBeeCntData *d);
 
 	int init_peripheral_system();
+	int init_peripheral_system_once();
 	void eval_peripheral_event(uint8_t mcp_gpioa);
 
 	BumbleBeeCntData ev_data;
 
 	String data_file_name = "data.txt";
 
-	char i2c_reg;
+	uint8_t i2c_reg;
 
 	const unsigned chipSelectSD = D8; //D8
 
