@@ -40,6 +40,8 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 int BumbleBeeCnt::init_peripheral_system() {
 	int retval = 0;
 
+	scale.powerDown();
+
 	Wire.begin();
 
 	if (!bme.begin())
@@ -77,16 +79,50 @@ void BumbleBeeCnt::do_tare() {
 #ifdef SERIAL_DEBUG
 	Serial.println("Tare...");
 #endif
-	scale.tare();
+	float tare_value = 0;
+
+	tare_value = weight_meas();
+
+
+
 	InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
 
-void BumbleBeeCnt::weight_meas() {
+float BumbleBeeCnt::weight_meas() {
+#ifdef SERIAL_DEBUG
+	Serial.println("Weight meas");
+#endif
+	float rv = 0;
+	uint8_t scale_status = 0;
+	long timeout = 0;
+	uint8_t meas_cnt = 0;
 
+	scale.begin(D3, D4);
+//	scale.start(2000);
+	scale.setCalFactor(sysdefs::scale::scale_factor);
+
+	timeout = millis();
+	while (true) {
+		scale_status = scale.update();
+		if (scale_status > 0)
+			++meas_cnt;
+		if (meas_cnt == 10) {
+			rv = scale.getData();
+			break;
+		}
+
+		if ((millis() - timeout) > 2000) {
+#ifdef SERIAL_DEBUG
+			Serial.println("timeout!");
+#endif
+			break;
+		}
+	}
+	return rv;
 }
 
 void BumbleBeeCnt::eval_peripheral_event(uint8_t mcp_gpioa) {
-	// data processing here
+// data processing here
 }
 
 void BumbleBeeCnt::wakeup() {
@@ -96,7 +132,7 @@ void BumbleBeeCnt::wakeup() {
 	 */
 	int addr = sysdefs::res_ctrl::i2c_addr;
 
-	//get sreg from reset controller
+//get sreg from reset controller
 	Wire.begin();
 	Wire.requestFrom(addr, 1);
 	while (Wire.available()) {
@@ -120,13 +156,6 @@ void BumbleBeeCnt::wakeup() {
 	Serial.print(src);
 	Serial.println();
 #endif
-
-	i2c_reg &= ~(sysdefs::res_ctrl::int_src_esp
-			| sysdefs::res_ctrl::int_src_mcp);
-	Wire.begin();
-	Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
-	Wire.write(i2c_reg);
-	Wire.endTransmission(true);
 
 	InternalEvent(ST_INIT_PERIPHERALS, NULL);
 }
@@ -172,9 +201,16 @@ void BumbleBeeCnt::read_peripherals() {
 
 	peripheral_data->mcp_gpioab = mcp.readGPIOAB();
 
-	//Weight measurement after fixed time intervals
-	if(i2c_reg & sysdefs::res_ctrl::int_src_esp)
-		weight_meas();
+//Weight measurement after fixed time intervals
+	if (i2c_reg & sysdefs::res_ctrl::int_src_esp)
+		peripheral_data->weight = weight_meas();
+
+	i2c_reg &=
+			~(sysdefs::res_ctrl::int_src_esp | sysdefs::res_ctrl::int_src_mcp);
+	Wire.begin();
+	Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
+	Wire.write(i2c_reg);
+	Wire.endTransmission(true);
 
 	InternalEvent(ST_EVAL_PERIPHERAL_DATA, peripheral_data);
 }
@@ -195,10 +231,6 @@ void BumbleBeeCnt::eval_peripheral_data(BumbleBeeCntData* p_data) {
 	Ds1307::DateTime dt;
 
 #ifdef SERIAL_DEBUG
-	Serial.print("LB0 ");
-	Serial.println(p_data->lb0);
-	Serial.print("LB1 ");
-	Serial.println(p_data->lb1);
 	Serial.print("GPIOAB: 0b");
 	Serial.println(p_data->mcp_gpioab, BIN);
 #endif
@@ -264,7 +296,7 @@ void BumbleBeeCnt::write_to_sd(BumbleBeeCntData* d) {
 
 void BumbleBeeCnt::prepare_sleep() {
 	InternalEvent(ST_GOTO_SLEEP, NULL);
-	//TODO: Hier dem ATTiny 88 über i2c bescheid geben, dass er wieder resetten darf.
+//TODO: Hier dem ATTiny 88 über i2c bescheid geben, dass er wieder resetten darf.
 	i2c_reg |= sysdefs::res_ctrl::allowreset;
 	Wire.begin();
 	Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
@@ -276,7 +308,7 @@ void BumbleBeeCnt::goto_sleep() {
 #ifdef SERIAL_DEBUG
 	Serial.println("State goto_sleep...");
 #endif
-	ESP.deepSleep(60E6);
+	ESP.deepSleep(10E6);
 //	delay(1000);
 //	ESP.restart();
 //	InternalEvent(ST_WAKEUP, NULL);

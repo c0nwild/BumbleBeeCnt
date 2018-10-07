@@ -18,6 +18,10 @@ namespace sysdefs {
 		const unsigned 	int_src_esp = (1 << 1);
 	}
 
+	namespace scale {
+		const float 	scale_factor = 696.0;
+	}
+
 }
 
 

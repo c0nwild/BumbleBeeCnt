@@ -13,9 +13,9 @@
 #define MCP_GPIOA 0u
 #define MCP_GPIOB 1u
 
+#define MCP_WLAN_EN 0x1
 #define MCP_LB0 0x20
 #define MCP_LB1 0x40
-#define MCP_WLAN_EN 0x1
 #define MCP_TARE 0x80
 
 #include <StateMachine.h>
@@ -28,6 +28,7 @@
 #include <WiFiClient.h>
 #include <BME280I2C.h>
 #include <HX711.h>
+#include <HX711_ADC.h>
 #include "system_definitions.h"
 
 struct BumbleBeeCntData: public EventData {
@@ -54,7 +55,7 @@ private:
 	void wakeup();
 	void init_peripherals();
 	void read_peripherals();
-	void weight_meas();
+	float weight_meas();
 	void eval_peripheral_data(BumbleBeeCntData *p_data);
 	void do_tare();
 	void write_to_sd(BumbleBeeCntData *d);
@@ -74,8 +75,8 @@ private:
 
 	const unsigned chipSelectSD = D8; //D8
 
-BEGIN_STATE_MAP
-STATE_MAP_ENTRY		(&BumbleBeeCnt::wakeup)
+	BEGIN_STATE_MAP
+		STATE_MAP_ENTRY(&BumbleBeeCnt::wakeup)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::init_peripherals)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::read_peripherals)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::eval_peripheral_data)
@@ -84,35 +85,35 @@ STATE_MAP_ENTRY		(&BumbleBeeCnt::wakeup)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::prepare_sleep)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::goto_sleep)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::error)
-		END_STATE_MAP
+	END_STATE_MAP
 
-		enum states {
-			ST_WAKEUP = 0,
-			ST_INIT_PERIPHERALS,
-			ST_READ_PERIPHERALS,
-			ST_EVAL_PERIPHERAL_DATA,
-			ST_TARE,
-			ST_WRITE_TO_SD,
-			ST_PREPARE_SLEEP,
-			ST_GOTO_SLEEP,
-			ST_ERROR,
-			ST_MAX_STATES
-		};
+	enum states {
+		ST_WAKEUP = 0,
+		ST_INIT_PERIPHERALS,
+		ST_READ_PERIPHERALS,
+		ST_EVAL_PERIPHERAL_DATA,
+		ST_TARE,
+		ST_WRITE_TO_SD,
+		ST_PREPARE_SLEEP,
+		ST_GOTO_SLEEP,
+		ST_ERROR,
+		ST_MAX_STATES
+	};
 
-		rtc::SReg sreg;
+	rtc::SReg sreg;
 
-		//BME280
-		BME280I2C bme;
+	//BME280
+	BME280I2C bme;
 
-		//  Portexpander
-		Adafruit_MCP23017 mcp;
+	//  Portexpander
+	Adafruit_MCP23017 mcp;
 
-		// Real Time Clock
-		Ds1307 ds1307;
+	// Real Time Clock
+	Ds1307 ds1307;
 
-		//Scale
-		HX711 scale;
+	//Scale
+	HX711_ADC scale;
 
-	}; /* class BUmbleBeeCnt */
+}; /* class BUmbleBeeCnt */
 
 #endif /* SRC_BUMBLEBEECNT_H_ */

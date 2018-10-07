@@ -97,6 +97,10 @@ void HX711::set_offset(long offset) {
 	OFFSET = offset;
 }
 
+long HX711::get_offset(){
+	return OFFSET;
+}
+
 void HX711::power_down() {
 	digitalWrite(PD_SCK, LOW);
 	digitalWrite(PD_SCK, HIGH);
