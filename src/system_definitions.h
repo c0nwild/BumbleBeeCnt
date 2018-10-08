@@ -11,7 +11,7 @@
 namespace sysdefs {
 
 	namespace res_ctrl {
-		const int 		i2c_addr = 0x47;
+		const uint8_t	i2c_addr = 0x47;
 		const unsigned 	sys_initialized = (1 << 2);
 		const unsigned 	allowreset = (1 << 3);
 		const unsigned 	int_src_mcp = (1 << 0);
@@ -23,7 +23,5 @@ namespace sysdefs {
 	}
 
 }
-
-
 
 #endif /* SRC_SYSTEM_DEFINITIONS_H_ */

@@ -20,14 +20,13 @@
 
 #include <StateMachine.h>
 #include "../lib/RTC/src/SReg.h"
-#include "../lib/DataStore/DataStore.h"
+#include "../lib/I2C/I2CCom.h"
 #include <Arduino.h>
 #include <Adafruit_MCP23017.h>
 #include "../lib/Ds1307/Ds1307.h"
 #include <SD.h>
 #include <WiFiClient.h>
 #include <BME280I2C.h>
-#include <HX711.h>
 #include <HX711_ADC.h>
 #include "system_definitions.h"
 
@@ -100,8 +99,6 @@ private:
 		ST_MAX_STATES
 	};
 
-	rtc::SReg sreg;
-
 	//BME280
 	BME280I2C bme;
 
@@ -113,6 +110,8 @@ private:
 
 	//Scale
 	HX711_ADC scale;
+
+	i2c::I2CCom attiny88;
 
 }; /* class BUmbleBeeCnt */
 

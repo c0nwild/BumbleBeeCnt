@@ -28,6 +28,26 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 
 	ds1307.setDateTime(&init_date);
 
+	//Only init once after power off.
+	mcp.begin();
+	for (int n = 0; n < 16; n++) {
+		mcp.pullUp(n, LOW);
+		mcp.pinMode(n, OUTPUT);
+	}
+	mcp.pinMode(7, INPUT);
+	mcp.pullUp(7, HIGH);
+	mcp.pinMode(6, INPUT);
+	mcp.pullUp(6, HIGH);
+	mcp.pinMode(5, INPUT);
+	mcp.pullUp(5, HIGH);
+	mcp.pinMode(0, INPUT);
+	mcp.pullUp(0, HIGH);
+	for (int n = 0; n < 16; n++)
+		mcp.setupInterruptPin(n, CHANGE);
+	mcp.setupInterrupts(true, true, LOW);
+
+	DEBUG_MSG(DEBUG_ID_MCP23017)
+
 	pinMode(chipSelectSD, OUTPUT);
 	if (!SD.begin(chipSelectSD)) {
 		retval |= -DEBUG_ID_SD;
@@ -49,29 +69,6 @@ int BumbleBeeCnt::init_peripheral_system() {
 	else
 		DEBUG_MSG(DEBUG_ID_BME280);
 
-	//Only init once after power off.
-	if (!mcp.readRegister(MCP23017_IOCONA)) {
-		sreg.init();
-		mcp.begin();
-		for (int n = 0; n < 16; n++) {
-			mcp.pullUp(n, LOW);
-			mcp.pinMode(n, OUTPUT);
-		}
-		mcp.pinMode(7, INPUT);
-		mcp.pullUp(7, HIGH);
-		mcp.pinMode(6, INPUT);
-		mcp.pullUp(6, HIGH);
-		mcp.pinMode(5, INPUT);
-		mcp.pullUp(5, HIGH);
-		mcp.pinMode(0, INPUT);
-		mcp.pullUp(0, HIGH);
-		for (int n = 0; n < 16; n++)
-			mcp.setupInterruptPin(n, CHANGE);
-		mcp.setupInterrupts(true, true, LOW);
-
-		DEBUG_MSG(DEBUG_ID_MCP23017)
-	}
-
 	return retval;
 }
 
@@ -82,8 +79,6 @@ void BumbleBeeCnt::do_tare() {
 	float tare_value = 0;
 
 	tare_value = weight_meas();
-
-
 
 	InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
@@ -118,6 +113,7 @@ float BumbleBeeCnt::weight_meas() {
 			break;
 		}
 	}
+	scale.powerDown();
 	return rv;
 }
 
@@ -127,19 +123,28 @@ void BumbleBeeCnt::eval_peripheral_event(uint8_t mcp_gpioa) {
 
 void BumbleBeeCnt::wakeup() {
 	DEBUG_MSG(DEBUG_ID_ST_WAKEUP)
-	/* TODO: Hier den Attiny 88 über I2C abfragen, solange keine Freigabe vom Wemos erfolgt
+	/* TODO: Hier den Attiny 88 über I2C abfragen, solange keine Freigabe vomconversion Wemos erfolgt
 	 * darf der Tiny keinen Reset durchführen.
 	 */
-	int addr = sysdefs::res_ctrl::i2c_addr;
+	states next_state = ST_INIT_PERIPHERALS;
+	BumbleBeeCntData *d = NULL;
+
+	attiny88.setSlaveAddr(sysdefs::res_ctrl::i2c_addr);
 
 //get sreg from reset controller
-	Wire.begin();
-	Wire.requestFrom(addr, 1);
-	while (Wire.available()) {
-		i2c_reg = Wire.read();
-	}
-	Wire.endTransmission(true);
+//	Wire.begin();
+//	Wire.requestFrom(addr, 1);
+//	while (Wire.available()) {
+//		i2c_reg = Wire.read();
+//	}
+//	Wire.endTransmission(true);
+	i2c_reg = attiny88.getData();
 
+	if (i2c_reg == 0xff) {
+		next_state = ST_ERROR;
+		d = new BumbleBeeCntData;
+		d->info = "invalid data from int ctrl";
+	}
 #ifdef SERIAL_DEBUG
 	String src;
 	if (i2c_reg & sysdefs::res_ctrl::int_src_esp)
@@ -149,15 +154,17 @@ void BumbleBeeCnt::wakeup() {
 	else
 		src = "undef";
 
+	Serial.print("i2cbuf: ");
+	Serial.println(attiny88.dumpBuffer(), BIN);
 	Serial.print("I2CREG: 0x");
-	Serial.print(i2c_reg);
+	Serial.print(i2c_reg, BIN);
 	Serial.println();
 	Serial.print("SRC: ");
 	Serial.print(src);
 	Serial.println();
 #endif
 
-	InternalEvent(ST_INIT_PERIPHERALS, NULL);
+	InternalEvent(next_state, d);
 }
 
 void BumbleBeeCnt::init_peripherals() {
@@ -181,10 +188,16 @@ void BumbleBeeCnt::init_peripherals() {
 		data = NULL;
 
 		i2c_reg |= sysdefs::res_ctrl::sys_initialized;
-		Wire.begin();
-		Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
-		Wire.write(i2c_reg);
-		Wire.endTransmission(true);
+#ifdef SERIAL_DEBUG
+		Serial.print("I2CREG: 0x");
+		Serial.print(i2c_reg, BIN);
+		Serial.println();
+#endif
+//		Wire.begin();
+//		Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
+//		Wire.write(i2c_reg);
+//		Wire.endTransmission(true);
+		attiny88.sendData(i2c_reg);
 	}
 	InternalEvent(next_state, data);
 }
@@ -195,22 +208,23 @@ void BumbleBeeCnt::read_peripherals() {
 	BumbleBeeCntData* peripheral_data;
 	peripheral_data = new BumbleBeeCntData;
 
+	//Weight measurement after fixed time intervals
+	if (i2c_reg & sysdefs::res_ctrl::int_src_esp)
+		peripheral_data->weight = weight_meas();
+
 	peripheral_data->temperature = bme.temp();
 	peripheral_data->humidity = bme.hum();
 	peripheral_data->pressure = bme.pres();
 
 	peripheral_data->mcp_gpioab = mcp.readGPIOAB();
 
-//Weight measurement after fixed time intervals
-	if (i2c_reg & sysdefs::res_ctrl::int_src_esp)
-		peripheral_data->weight = weight_meas();
-
 	i2c_reg &=
 			~(sysdefs::res_ctrl::int_src_esp | sysdefs::res_ctrl::int_src_mcp);
-	Wire.begin();
-	Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
-	Wire.write(i2c_reg);
-	Wire.endTransmission(true);
+//	Wire.begin();
+//	Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
+//	Wire.write(i2c_reg);
+//	Wire.endTransmission(true);
+	attiny88.sendData(i2c_reg);
 
 	InternalEvent(ST_EVAL_PERIPHERAL_DATA, peripheral_data);
 }
@@ -298,10 +312,16 @@ void BumbleBeeCnt::prepare_sleep() {
 	InternalEvent(ST_GOTO_SLEEP, NULL);
 //TODO: Hier dem ATTiny 88 über i2c bescheid geben, dass er wieder resetten darf.
 	i2c_reg |= sysdefs::res_ctrl::allowreset;
-	Wire.begin();
-	Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
-	Wire.write(i2c_reg);
-	Wire.endTransmission(true);
+//	Wire.begin();
+//	Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
+//	Wire.write(i2c_reg);
+//	Wire.endTransmission(true);
+#ifdef SERIAL_DEBUG
+	Serial.print("I2CREG: 0x");
+	Serial.print(i2c_reg, BIN);
+	Serial.println();
+#endif
+	attiny88.sendData(i2c_reg);
 }
 
 void BumbleBeeCnt::goto_sleep() {
