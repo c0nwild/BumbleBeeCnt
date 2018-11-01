@@ -51,16 +51,16 @@ public:
 	void trigger();
 private:
 
-	void wakeup();
-	void init_peripherals();
-	void read_peripherals();
-	float weight_meas();
-	void eval_peripheral_data(BumbleBeeCntData *p_data);
-	void do_tare();
-	void write_to_sd(BumbleBeeCntData *d);
-	void prepare_sleep();
-	void goto_sleep();
-	void error(BumbleBeeCntData *d);
+	void st_wakeup();
+	void st_init_peripherals();
+	void st_read_peripherals();
+	float st_weight_meas();
+	void st_eval_peripheral_data(BumbleBeeCntData *p_data);
+	void st_do_tare();
+	void st_write_to_sd(BumbleBeeCntData *d);
+	void st_prepare_sleep();
+	void st_goto_sleep();
+	void st_error(BumbleBeeCntData *d);
 
 	int init_peripheral_system();
 	int init_peripheral_system_once();
@@ -75,15 +75,15 @@ private:
 	const unsigned chipSelectSD = D8; //D8
 
 	BEGIN_STATE_MAP
-		STATE_MAP_ENTRY(&BumbleBeeCnt::wakeup)
-		STATE_MAP_ENTRY(&BumbleBeeCnt::init_peripherals)
-		STATE_MAP_ENTRY(&BumbleBeeCnt::read_peripherals)
-		STATE_MAP_ENTRY(&BumbleBeeCnt::eval_peripheral_data)
-		STATE_MAP_ENTRY(&BumbleBeeCnt::do_tare)
-		STATE_MAP_ENTRY(&BumbleBeeCnt::write_to_sd)
-		STATE_MAP_ENTRY(&BumbleBeeCnt::prepare_sleep)
-		STATE_MAP_ENTRY(&BumbleBeeCnt::goto_sleep)
-		STATE_MAP_ENTRY(&BumbleBeeCnt::error)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_wakeup)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_init_peripherals)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_read_peripherals)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_eval_peripheral_data)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_do_tare)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_write_to_sd)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_prepare_sleep)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_goto_sleep)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_error)
 	END_STATE_MAP
 
 	enum states {

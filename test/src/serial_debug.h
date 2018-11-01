@@ -10,9 +10,12 @@
 
 #ifdef SERIAL_DEBUG
 #define DEBUG_MSG(x) \
-		Serial.println(x, HEX);
+		Serial.println(x);
+#define DEBUG_MSG_ARG(x,t) \
+		Serial.println(x, t);
 #else
 #define DEBUG_MSG(x)
+#define DEBUG_MSG_HEX(x)
 #endif
 
 //Debug ID´s for peripheral hardware
