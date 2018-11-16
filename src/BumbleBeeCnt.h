@@ -19,16 +19,18 @@
 #define MCP_TARE 0x80
 
 #include <StateMachine.h>
-#include "../lib/RTC/src/SReg.h"
 #include "../lib/I2C/I2CCom.h"
 #include <Arduino.h>
 #include <Adafruit_MCP23017.h>
 #include "../lib/Ds1307/Ds1307.h"
 #include <SD.h>
 #include <WiFiClient.h>
+#include <ESP8266WebServer.h>
 #include <BME280I2C.h>
 #include <HX711_ADC.h>
+#include <webcontent.h>
 #include "system_definitions.h"
+#include <ESP8266WiFi.h>
 
 struct BumbleBeeCntData: public EventData {
 	String info;
@@ -52,6 +54,7 @@ public:
 private:
 
 	void st_wakeup();
+	void st_wifi();
 	void st_init_peripherals();
 	void st_read_peripherals();
 	float st_weight_meas();
@@ -62,6 +65,7 @@ private:
 	void st_goto_sleep();
 	void st_error(BumbleBeeCntData *d);
 
+	int init_wifi();
 	int init_peripheral_system();
 	int init_peripheral_system_once();
 	void eval_peripheral_event(uint8_t mcp_gpioa);
@@ -76,6 +80,7 @@ private:
 
 	BEGIN_STATE_MAP
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_wakeup)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_wifi)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_init_peripherals)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_read_peripherals)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_eval_peripheral_data)
@@ -88,6 +93,7 @@ private:
 
 	enum states {
 		ST_WAKEUP = 0,
+		ST_WIFI,
 		ST_INIT_PERIPHERALS,
 		ST_READ_PERIPHERALS,
 		ST_EVAL_PERIPHERAL_DATA,
@@ -111,7 +117,12 @@ private:
 	//Scale
 	HX711_ADC scale;
 
+	//Interrupt controller
 	i2c::I2CCom attiny88;
+
+	//WebServer
+	static ESP8266WebServer server;
+	static WebContent web_content;
 
 }; /* class BUmbleBeeCnt */
 

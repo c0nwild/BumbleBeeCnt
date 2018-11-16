@@ -22,6 +22,17 @@ namespace sysdefs {
 		const float 	scale_factor = 696.0;
 	}
 
+	namespace mcp{
+		const uint8_t	wlan_en = 0x1;
+		const uint8_t	lb0 = 0x20;
+		const uint8_t	lb1 = 0x40;
+		const uint8_t	tare = 0x80;
+	}
+
+	namespace wifi{
+	/* Set these to your desired credentials. */
+
+	}
 }
 
 #endif /* SRC_SYSTEM_DEFINITIONS_H_ */

@@ -30,58 +30,16 @@
 
 /* Create a WiFi access point and provide a web server on it. */
 
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h> 
-#include <ESP8266WebServer.h>
 #include <BumbleBeeCnt.h>
-#include "webcontent.h"
-
-
-#include "../lib/RTC/src/SReg.h"
 
 extern "C" {
 #include "user_interface.h"
 }
 
-#include <DateTime.h>
-
 BumbleBeeCnt st_machine_hw_test;
-
-/* Set these to your desired credentials. */
-const char *ssid = "ESPap";
-const char *password = "thereisnospoon";
-
-ESP8266WebServer server(80);
-
-WebContent web_content;
 
 void trigger_st_machine() {
 	st_machine_hw_test.trigger();
-}
-
-/* Just a little test message.  Go to http://192.168.4.1 in a web browser
- * connected to this access point to see it.
- */
-void handleRoot() {
-	server.send(200, "text/html", web_content.output());
-}
-
-void init_wifi() {
-#ifdef SERIAL_DEBUG
-	Serial.print("Configuring access point...");
-#endif
-	/* You can remove the password parameter if you want the AP to be open. */
-	WiFi.softAP(ssid, password);
-	IPAddress myIP = WiFi.softAPIP();
-#ifdef SERIAL_DEBUG
-	Serial.print("AP IP address: ");
-#endif
-	Serial.println(myIP);
-	server.on("/", handleRoot);
-	server.begin();
-#ifdef SERIAL_DEBUG
-	Serial.println("HTTP server started");
-#endif
 }
 
 void setup() {

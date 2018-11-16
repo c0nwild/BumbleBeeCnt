@@ -10,6 +10,10 @@
 
 #include "../test/src/serial_debug.h"
 
+static void handle_root(){
+	BumbleBeeCnt::server.send(200, "text/html", BumbleBeeCnt::web_content.output());
+}
+
 void BumbleBeeCnt::trigger() {
 	ExternalEvent(ST_WAKEUP);
 //	BEGIN_TRANSITION_MAP
@@ -20,6 +24,28 @@ void BumbleBeeCnt::trigger() {
 //	TRANSITION_MAP_ENTRY(EVENT_IGNORED)//ST_GOTO_SLEEP
 //	TRANSITION_MAP_ENTRY(EVENT_IGNORED)//ST_ERROR
 //	END_TRANSITION_MAP(NULL)
+}
+
+int BumbleBeeCnt::init_wifi() {
+
+#ifdef SERIAL_DEBUG
+	Serial.print("Configuring access point...");
+#endif
+	const char *ssid = "ESPap";
+	const char *password = "thereisnospoon";
+	/* You can remove the password parameter if you want the AP to be open. */
+	WiFi.softAP(ssid, password);
+	IPAddress myIP = WiFi.softAPIP();
+#ifdef SERIAL_DEBUG
+	Serial.print("AP IP address: ");
+#endif
+	Serial.println(myIP);
+	server.on("/", handle_root);
+	server.begin();
+#ifdef SERIAL_DEBUG
+	Serial.println("HTTP server started");
+#endif
+	return 0;
 }
 
 int BumbleBeeCnt::init_peripheral_system_once() {
@@ -195,6 +221,12 @@ void BumbleBeeCnt::st_init_peripherals() {
 }
 
 //State function
+void BumbleBeeCnt::st_wifi() {
+	init_wifi();
+
+}
+
+//State function
 void BumbleBeeCnt::st_read_peripherals() {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_READ_PERIPHERALS, HEX)
 
@@ -213,10 +245,7 @@ void BumbleBeeCnt::st_read_peripherals() {
 
 	i2c_reg &=
 			~(sysdefs::res_ctrl::int_src_esp | sysdefs::res_ctrl::int_src_mcp);
-//	Wire.begin();
-//	Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
-//	Wire.write(i2c_reg);
-//	Wire.endTransmission(true);
+
 	attiny88.sendData(i2c_reg);
 
 	InternalEvent(ST_EVAL_PERIPHERAL_DATA, peripheral_data);
@@ -228,10 +257,12 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	char date_buffer[80];
 	struct tm t;
 	BumbleBeeCntData *d_out;
-	p_data->lb0 = (p_data->mcp_gpioab & MCP_LB0) ? 1 : 0;
-	p_data->lb1 = (p_data->mcp_gpioab & MCP_LB1) ? 1 : 0;
-	p_data->wlan_en = (p_data->mcp_gpioab & MCP_WLAN_EN) ? 1 : 0;
-	p_data->tare = (p_data->mcp_gpioab & MCP_TARE) ? 1 : 0;
+	states next_state = ST_EVAL_PERIPHERAL_DATA;
+
+	p_data->lb0 = (p_data->mcp_gpioab & sysdefs::mcp::lb0) ? 1 : 0;
+	p_data->lb1 = (p_data->mcp_gpioab & sysdefs::mcp::lb1) ? 1 : 0;
+	p_data->wlan_en = (p_data->mcp_gpioab & sysdefs::mcp::wlan_en) ? 1 : 0;
+	p_data->tare = (p_data->mcp_gpioab & sysdefs::mcp::tare) ? 1 : 0;
 
 	d_out = new BumbleBeeCntData;
 
@@ -279,9 +310,13 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 //	InternalEvent(ST_WRITE_TO_SD, d_out); //string, den wir schreiben wollen konstruieren wir hier und übergeben ihn als event data.
 	if (p_data->tare)
-		InternalEvent(ST_TARE, NULL);
+		next_state = ST_TARE;
+	else if (p_data->wlan_en)
+		next_state = ST_WIFI;
 	else
-		InternalEvent(ST_PREPARE_SLEEP, NULL);
+		next_state = ST_PREPARE_SLEEP;
+
+	InternalEvent(next_state, NULL);
 }
 
 void BumbleBeeCnt::st_write_to_sd(BumbleBeeCntData* d) {

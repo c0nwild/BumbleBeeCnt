@@ -9,17 +9,21 @@
 #define WEBCONTENT_H_
 
 #include <WString.h>
+#include <vector>
 
 struct WebContent {
-	float _t_val;
-	float _h_val;
+
+	void append(String s);
+
+	String create_heading(String h);
+	String create_entry(String s);
+
+	String create_temp_entry(float t);
+	String create_humid_entry(float h);
 
 	String output(void);
-	void setTVal(float t);
-	void setHVal(float h);
 private:
-	String create_temp_entry();
-	String create_humid_entry();
+	std::vector<String> content;
 };
 
 #endif /* WEBCONTENT_H_ */
