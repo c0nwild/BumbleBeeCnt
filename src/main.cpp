@@ -33,12 +33,11 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h> 
 #include <ESP8266WebServer.h>
-#include <Adafruit_MCP23017.h>
-#include <DS1307.h>
-#include <DHT.h>
-#include <SPI.h>
-#include <SD.h>
+#include <BumbleBeeCnt.h>
 #include "webcontent.h"
+
+
+#include "../lib/RTC/src/SReg.h"
 
 extern "C" {
 #include "user_interface.h"
@@ -46,7 +45,7 @@ extern "C" {
 
 #include <DateTime.h>
 
-#define SERIAL_DEBUG
+BumbleBeeCnt st_machine_hw_test;
 
 /* Set these to your desired credentials. */
 const char *ssid = "ESPap";
@@ -55,6 +54,10 @@ const char *password = "thereisnospoon";
 ESP8266WebServer server(80);
 
 WebContent web_content;
+
+void trigger_st_machine() {
+	st_machine_hw_test.trigger();
+}
 
 /* Just a little test message.  Go to http://192.168.4.1 in a web browser
  * connected to this access point to see it.
@@ -82,9 +85,11 @@ void init_wifi() {
 }
 
 void setup() {
-
+#ifdef SERIAL_DEBUG
+	Serial.begin(115200);
+#endif
 }
 
 void loop() {
-
+	trigger_st_machine();
 }
