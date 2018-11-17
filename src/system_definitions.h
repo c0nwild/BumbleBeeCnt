@@ -31,7 +31,7 @@ namespace sysdefs {
 
 	namespace wifi{
 	/* Set these to your desired credentials. */
-
+//		const char* ssid = "";
 	}
 }
 

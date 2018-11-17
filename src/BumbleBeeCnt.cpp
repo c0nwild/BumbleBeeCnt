@@ -10,8 +10,12 @@
 
 #include "../test/src/serial_debug.h"
 
-static void handle_root(){
-	BumbleBeeCnt::server.send(200, "text/html", BumbleBeeCnt::web_content.output());
+ESP8266WebServer BumbleBeeCnt::server;
+WebContent BumbleBeeCnt::web_content;
+
+static void handle_root() {
+	BumbleBeeCnt::server.send(200, "text/html",
+			BumbleBeeCnt::web_content.output());
 }
 
 void BumbleBeeCnt::trigger() {
@@ -211,10 +215,6 @@ void BumbleBeeCnt::st_init_peripherals() {
 
 		i2c_reg |= sysdefs::res_ctrl::sys_initialized;
 
-//		Wire.begin();
-//		Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
-//		Wire.write(i2c_reg);
-//		Wire.endTransmission(true);
 		attiny88.sendData(i2c_reg);
 	}
 	InternalEvent(next_state, data);
@@ -222,8 +222,21 @@ void BumbleBeeCnt::st_init_peripherals() {
 
 //State function
 void BumbleBeeCnt::st_wifi() {
-	init_wifi();
+	static bool is_wifi_initialized = false;
+	uint16_t mcp_gpioab = 0;
+	states next_state = ST_WIFI;
 
+	if (!is_wifi_initialized) {
+		init_wifi();
+		is_wifi_initialized = true;
+	}
+	server.handleClient();
+	mcp_gpioab = mcp.readGPIOAB();
+	if (!(mcp_gpioab & sysdefs::mcp::wlan_en)) {
+		next_state = ST_READ_PERIPHERALS;
+		server.stop();
+	}
+	InternalEvent(next_state, NULL);
 }
 
 //State function
