@@ -30,8 +30,13 @@ namespace sysdefs {
 	}
 
 	namespace wifi{
+<<<<<<< HEAD
 		const String ssid = "ESPap";
 		const String passphrase = "thereisnospoon";
+=======
+	/* Set these to your desired credentials. */
+//		const char* ssid = "";
+>>>>>>> branch 'master' of ssh://cwild@pc-wkst-devel.fritz.box/home/cwild/jenkins/git/esp8266.git
 	}
 }
 
