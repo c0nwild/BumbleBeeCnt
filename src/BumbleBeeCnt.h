@@ -29,8 +29,8 @@
 #include <BME280I2C.h>
 #include <HX711_ADC.h>
 #include <webcontent.h>
-#include "system_definitions.h"
 #include <ESP8266WiFi.h>
+#include "system_definitions.h"
 
 struct BumbleBeeCntData: public EventData {
 	String info;

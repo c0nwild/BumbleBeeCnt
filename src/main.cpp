@@ -29,12 +29,11 @@
  */
 
 /* Create a WiFi access point and provide a web server on it. */
-
-#include <BumbleBeeCnt.h>
-
 extern "C" {
 #include "user_interface.h"
 }
+
+#include <BumbleBeeCnt.h>
 
 BumbleBeeCnt st_machine_hw_test;
 

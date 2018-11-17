@@ -30,8 +30,8 @@ namespace sysdefs {
 	}
 
 	namespace wifi{
-	/* Set these to your desired credentials. */
-
+		const String ssid = "ESPap";
+		const String passphrase = "thereisnospoon";
 	}
 }
 
