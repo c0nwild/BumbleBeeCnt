@@ -70,8 +70,8 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 	mcp.pullUp(6, HIGH);
 	mcp.pinMode(5, INPUT);
 	mcp.pullUp(5, HIGH);
-	mcp.pinMode(0, INPUT);
-	mcp.pullUp(0, HIGH);
+	mcp.pinMode(4, INPUT);
+	mcp.pullUp(4, HIGH);
 	for (int n = 0; n < 16; n++)
 		mcp.setupInterruptPin(n, CHANGE);
 	mcp.setupInterrupts(true, true, LOW);
@@ -156,13 +156,7 @@ void BumbleBeeCnt::st_wakeup() {
 
 	attiny88.setSlaveAddr(sysdefs::res_ctrl::i2c_addr);
 
-//get sreg from reset controller
-//	Wire.begin();
-//	Wire.requestFrom(addr, 1);
-//	while (Wire.available()) {
-//		i2c_reg = Wire.read();
-//	}
-//	Wire.endTransmission(true);
+	//get sreg from reset controller
 	i2c_reg = attiny88.getData();
 
 	if (i2c_reg == 0xff) {
@@ -231,10 +225,14 @@ void BumbleBeeCnt::st_wifi() {
 		is_wifi_initialized = true;
 	}
 	server.handleClient();
+
+	delay(10);
+
 	mcp_gpioab = mcp.readGPIOAB();
 	if (!(mcp_gpioab & sysdefs::mcp::wlan_en)) {
 		next_state = ST_READ_PERIPHERALS;
 		server.stop();
+		is_wifi_initialized = false;
 	}
 	InternalEvent(next_state, NULL);
 }

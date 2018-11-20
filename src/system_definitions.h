@@ -23,7 +23,7 @@ namespace sysdefs {
 	}
 
 	namespace mcp{
-		const uint8_t	wlan_en = 0x1;
+		const uint8_t	wlan_en = 0x10;
 		const uint8_t	lb0 = 0x20;
 		const uint8_t	lb1 = 0x40;
 		const uint8_t	tare = 0x80;
