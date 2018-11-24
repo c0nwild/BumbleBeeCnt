@@ -43,3 +43,7 @@ String WebContent::output(void) {
 void WebContent::append(String s) {
 	content.push_back(s);
 }
+
+void WebContent::clear(void){
+	content.clear();
+}

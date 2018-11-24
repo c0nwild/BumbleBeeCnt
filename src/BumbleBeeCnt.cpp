@@ -14,6 +14,22 @@ ESP8266WebServer BumbleBeeCnt::server;
 WebContent BumbleBeeCnt::web_content;
 
 static void handle_root() {
+	WebContent *wc;
+	String heading;
+	String line1;
+	String line2;
+	String line3;
+
+	wc = &BumbleBeeCnt::web_content;
+
+	wc->clear();
+
+	heading = wc->create_heading("HummelCounter");
+	line1 = wc->create_entry("Line1");
+
+	wc->append(heading);
+	wc->append(line1);
+
 	BumbleBeeCnt::server.send(200, "text/html",
 			BumbleBeeCnt::web_content.output());
 }

@@ -14,6 +14,7 @@
 struct WebContent {
 
 	void append(String s);
+	void clear(void);
 
 	String create_heading(String h);
 	String create_entry(String s);
@@ -22,6 +23,7 @@ struct WebContent {
 	String create_humid_entry(float h);
 
 	String output(void);
+
 private:
 	std::vector<String> content;
 };
