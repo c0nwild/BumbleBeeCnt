@@ -262,23 +262,9 @@ int AccessPoint::initWifi() {
 //	WiFi.mode(WIFI_STA);
 	WiFi.softAP(ssid, password);
 //	WiFi.begin(ssid, password);
-	DBG_OUTPUT_PORT.print("Connecting to ");
-	DBG_OUTPUT_PORT.println(ssid);
 
-	// Wait for connection
-	uint8_t i = 0;
-	while (WiFi.status() != WL_CONNECTED && i++ < 20) { //wait 10 seconds
-		delay(500);
-	}
-	if (i == 21) {
-		DBG_OUTPUT_PORT.print("Could not connect to");
-		DBG_OUTPUT_PORT.println(ssid);
-		while (1) {
-			delay(500);
-		}
-	}
-	DBG_OUTPUT_PORT.print("Connected! IP address: ");
-	DBG_OUTPUT_PORT.println(WiFi.localIP());
+	DBG_OUTPUT_PORT.print("IP address: ");
+	DBG_OUTPUT_PORT.println(WiFi.softAPIP());
 
 	if (MDNS.begin(host)) {
 		MDNS.addService("http", "tcp", 80);
