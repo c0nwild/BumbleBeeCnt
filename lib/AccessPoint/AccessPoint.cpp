@@ -259,8 +259,9 @@ int AccessPoint::initWifi() {
 	DBG_OUTPUT_PORT.begin(115200);
 	DBG_OUTPUT_PORT.setDebugOutput(true);
 	DBG_OUTPUT_PORT.print("\n");
-	WiFi.mode(WIFI_STA);
-	WiFi.begin(ssid, password);
+//	WiFi.mode(WIFI_STA);
+	WiFi.softAP(ssid, password);
+//	WiFi.begin(ssid, password);
 	DBG_OUTPUT_PORT.print("Connecting to ");
 	DBG_OUTPUT_PORT.println(ssid);
 
