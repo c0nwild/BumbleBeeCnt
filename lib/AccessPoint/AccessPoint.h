@@ -12,9 +12,13 @@
 #include <ESP8266WebServer.h>
 #include <webcontent.h>
 #include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
+#include <SPI.h>
+#include <SD.h>
 #include <system_definitions.h>
 
 class AccessPoint {
+private:
 
 public:
 	static WebContent web_content;
