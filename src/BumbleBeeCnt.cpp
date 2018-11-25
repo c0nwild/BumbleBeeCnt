@@ -188,7 +188,6 @@ void BumbleBeeCnt::st_init_peripherals() {
 void BumbleBeeCnt::st_wifi() {
 	static bool is_wifi_initialized = false;
 	uint16_t mcp_gpioab = 0;
-	states next_state = ST_WIFI;
 
 	if (!is_wifi_initialized) {
 		ap.initWifi();
@@ -200,11 +199,10 @@ void BumbleBeeCnt::st_wifi() {
 
 	mcp_gpioab = mcp.readGPIOAB();
 	if (!(mcp_gpioab & sysdefs::mcp::wlan_en)) {
-		next_state = ST_READ_PERIPHERALS;
 		ap.stopWifi();
 		is_wifi_initialized = false;
 	}
-	InternalEvent(next_state, NULL);
+	InternalEvent(ST_READ_PERIPHERALS, NULL);
 }
 
 //State function

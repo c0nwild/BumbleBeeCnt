@@ -69,5 +69,6 @@ void AccessPoint::handleClient() {
 
 int AccessPoint::stopWifi(){
 	server.stop();
+	return 0;
 }
 
