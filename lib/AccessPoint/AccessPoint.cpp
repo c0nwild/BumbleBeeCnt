@@ -43,8 +43,8 @@ int AccessPoint::initWifi() {
 	IPAddress myIP = WiFi.softAPIP();
 #ifdef SERIAL_DEBUG
 	Serial.print("AP IP address: ");
-#endif
 	Serial.println(myIP);
+#endif
 	server.on("/", handle_root);
 	server.begin();
 #ifdef SERIAL_DEBUG
