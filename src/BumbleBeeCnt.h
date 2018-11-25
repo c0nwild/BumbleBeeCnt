@@ -8,7 +8,7 @@
 #ifndef SRC_BUMBLEBEECNT_H_
 #define SRC_BUMBLEBEECNT_H_
 
-#define SERIAL_DEBUG
+//#define SERIAL_DEBUG
 
 #define MCP_GPIOA 0u
 #define MCP_GPIOB 1u
