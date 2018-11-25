@@ -24,12 +24,9 @@
 #include <Adafruit_MCP23017.h>
 #include "../lib/Ds1307/Ds1307.h"
 #include <SD.h>
-#include <WiFiClient.h>
-#include <ESP8266WebServer.h>
 #include <BME280I2C.h>
 #include <HX711_ADC.h>
-#include <webcontent.h>
-#include <ESP8266WiFi.h>
+#include <AccessPoint.h>
 #include "system_definitions.h"
 
 struct BumbleBeeCntData: public EventData {
@@ -65,7 +62,6 @@ private:
 	void st_goto_sleep();
 	void st_error(BumbleBeeCntData *d);
 
-	int init_wifi();
 	int init_peripheral_system();
 	int init_peripheral_system_once();
 	void eval_peripheral_event(uint8_t mcp_gpioa);
@@ -121,8 +117,7 @@ private:
 	i2c::I2CCom attiny88;
 
 	//WebServer
-	static ESP8266WebServer server;
-	static WebContent web_content;
+	AccessPoint ap;
 
 }; /* class BUmbleBeeCnt */
 

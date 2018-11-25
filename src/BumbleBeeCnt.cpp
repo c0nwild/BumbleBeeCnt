@@ -10,30 +10,6 @@
 
 #include "../test/src/serial_debug.h"
 
-ESP8266WebServer BumbleBeeCnt::server;
-WebContent BumbleBeeCnt::web_content;
-
-static void handle_root() {
-	WebContent *wc;
-	String heading;
-	String line1;
-	String line2;
-	String line3;
-
-	wc = &BumbleBeeCnt::web_content;
-
-	wc->clear();
-
-	heading = wc->create_heading("HummelCounter");
-	line1 = wc->create_entry("Line1");
-
-	wc->append(heading);
-	wc->append(line1);
-
-	BumbleBeeCnt::server.send(200, "text/html",
-			BumbleBeeCnt::web_content.output());
-}
-
 void BumbleBeeCnt::trigger() {
 	ExternalEvent(ST_WAKEUP);
 //	BEGIN_TRANSITION_MAP
@@ -44,28 +20,6 @@ void BumbleBeeCnt::trigger() {
 //	TRANSITION_MAP_ENTRY(EVENT_IGNORED)//ST_GOTO_SLEEP
 //	TRANSITION_MAP_ENTRY(EVENT_IGNORED)//ST_ERROR
 //	END_TRANSITION_MAP(NULL)
-}
-
-int BumbleBeeCnt::init_wifi() {
-
-#ifdef SERIAL_DEBUG
-	Serial.print("Configuring access point...");
-#endif
-	const char *ssid = sysdefs::wifi::ssid.c_str();
-	const char *password = sysdefs::wifi::passphrase.c_str();
-	/* You can remove the password parameter if you want the AP to be open. */
-	WiFi.softAP(ssid, password);
-	IPAddress myIP = WiFi.softAPIP();
-#ifdef SERIAL_DEBUG
-	Serial.print("AP IP address: ");
-#endif
-	Serial.println(myIP);
-	server.on("/", handle_root);
-	server.begin();
-#ifdef SERIAL_DEBUG
-	Serial.println("HTTP server started");
-#endif
-	return 0;
 }
 
 int BumbleBeeCnt::init_peripheral_system_once() {
@@ -237,17 +191,17 @@ void BumbleBeeCnt::st_wifi() {
 	states next_state = ST_WIFI;
 
 	if (!is_wifi_initialized) {
-		init_wifi();
+		ap.initWifi();
 		is_wifi_initialized = true;
 	}
-	server.handleClient();
+	ap.handleClient();
 
 	delay(10);
 
 	mcp_gpioab = mcp.readGPIOAB();
 	if (!(mcp_gpioab & sysdefs::mcp::wlan_en)) {
 		next_state = ST_READ_PERIPHERALS;
-		server.stop();
+		ap.stopWifi();
 		is_wifi_initialized = false;
 	}
 	InternalEvent(next_state, NULL);
