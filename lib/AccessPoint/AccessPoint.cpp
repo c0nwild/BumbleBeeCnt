@@ -6,7 +6,6 @@
  */
 
 #include "AccessPoint.h"
-#define DBG_OUTPUT_PORT Serial
 
 ESP8266WebServer AccessPoint::server;
 WebContent AccessPoint::web_content;
@@ -68,7 +67,7 @@ static bool loadFromSdCard(String path) {
 	}
 
 	if (AccessPoint::server.streamFile(dataFile, dataType) != dataFile.size()) {
-		DBG_OUTPUT_PORT.println("Sent less data than expected!");
+		DEBUG_MSG("Sent less data than expected!");
 	}
 
 	dataFile.close();
@@ -85,20 +84,20 @@ static void handleFileUpload() {
 			SD.remove((char *) upload.filename.c_str());
 		}
 		uploadFile = SD.open(upload.filename.c_str(), FILE_WRITE);
-		DBG_OUTPUT_PORT.print("Upload: START, filename: ");
-		DBG_OUTPUT_PORT.println(upload.filename);
+		DEBUG_MSG("Upload: START, filename: ");
+		DEBUG_MSG(upload.filename);
 	} else if (upload.status == UPLOAD_FILE_WRITE) {
 		if (uploadFile) {
 			uploadFile.write(upload.buf, upload.currentSize);
 		}
-		DBG_OUTPUT_PORT.print("Upload: WRITE, Bytes: ");
-		DBG_OUTPUT_PORT.println(upload.currentSize);
+		DEBUG_MSG("Upload: WRITE, Bytes: ");
+		DEBUG_MSG(upload.currentSize);
 	} else if (upload.status == UPLOAD_FILE_END) {
 		if (uploadFile) {
 			uploadFile.close();
 		}
-		DBG_OUTPUT_PORT.print("Upload: END, Size: ");
-		DBG_OUTPUT_PORT.println(upload.totalSize);
+		DEBUG_MSG("Upload: END, Size: ");
+		DEBUG_MSG(upload.totalSize);
 	}
 }
 
@@ -203,6 +202,7 @@ static void printDirectory() {
 		output += entry.name();
 		output += "\"";
 		output += "}";
+		DEBUG_MSG(output);
 		AccessPoint::server.sendContent(output);
 		entry.close();
 	}
@@ -227,7 +227,7 @@ static void handleNotFound() {
 				+ AccessPoint::server.arg(i) + "\n";
 	}
 	AccessPoint::server.send(404, "text/plain", message);
-	DBG_OUTPUT_PORT.print(message);
+	DEBUG_MSG(message);
 }
 
 //static void handle_root() {
@@ -256,22 +256,18 @@ int AccessPoint::initWifi() {
 	const char *password = sysdefs::wifi::passphrase.c_str();
 	const char* host = "esp8266sd";
 
-	DBG_OUTPUT_PORT.begin(115200);
-	DBG_OUTPUT_PORT.setDebugOutput(true);
-	DBG_OUTPUT_PORT.print("\n");
-//	WiFi.mode(WIFI_STA);
+	DEBUG_MSG("\n");
 	WiFi.softAP(ssid, password);
-//	WiFi.begin(ssid, password);
 
-	DBG_OUTPUT_PORT.print("IP address: ");
-	DBG_OUTPUT_PORT.println(WiFi.softAPIP());
+	DEBUG_MSG("IP address: ");
+	DEBUG_MSG(WiFi.softAPIP());
 
 	if (MDNS.begin(host)) {
 		MDNS.addService("http", "tcp", 80);
-		DBG_OUTPUT_PORT.println("MDNS responder started");
-		DBG_OUTPUT_PORT.print("You can now connect to http://");
-		DBG_OUTPUT_PORT.print(host);
-		DBG_OUTPUT_PORT.println(".local");
+		DEBUG_MSG("MDNS responder started");
+		DEBUG_MSG("You can now connect to http://");
+		DEBUG_MSG(host);
+		DEBUG_MSG(".local");
 	}
 
 	server.on("/list", HTTP_GET, printDirectory);
@@ -283,10 +279,10 @@ int AccessPoint::initWifi() {
 	server.onNotFound(handleNotFound);
 
 	server.begin();
-	DBG_OUTPUT_PORT.println("HTTP server started");
+	DEBUG_MSG("HTTP server started");
 
 	if (SD.begin(SS)) {
-		DBG_OUTPUT_PORT.println("SD Card initialized.");
+		DEBUG_MSG("SD Card initialized.");
 		hasSD = true;
 	}
 	return 0;
@@ -307,5 +303,6 @@ void AccessPoint::handleClient() {
 
 int AccessPoint::stopWifi() {
 	server.stop();
+	WiFi.softAPdisconnect(true);
 	return 0;
 }

@@ -8,6 +8,9 @@
 #ifndef LIB_ACCESSPOINT_ACCESSPOINT_H_
 #define LIB_ACCESSPOINT_ACCESSPOINT_H_
 
+#define SERIAL_DEBUG
+
+#include "../../test/src/serial_debug.h"
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <webcontent.h>

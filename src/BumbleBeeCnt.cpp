@@ -8,8 +8,6 @@
 #include <BumbleBeeCnt.h>
 #include <time.h>
 
-#include "../test/src/serial_debug.h"
-
 void BumbleBeeCnt::trigger() {
 	ExternalEvent(ST_WAKEUP);
 //	BEGIN_TRANSITION_MAP
@@ -48,26 +46,18 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 
 	DEBUG_MSG_ARG(DEBUG_ID_MCP23017, HEX)
 
-	pinMode(chipSelectSD, OUTPUT);
-	if (!SD.begin(chipSelectSD)) {
-		retval |= -DEBUG_ID_SD;
-	} else {
-		DEBUG_MSG_ARG(DEBUG_ID_SD, HEX)
-	}
+//	pinMode(chipSelectSD, OUTPUT);
+//	if (!SD.begin(chipSelectSD)) {
+//		retval |= -DEBUG_ID_SD;
+//	} else {
+//	DEBUG_MSG_ARG(DEBUG_ID_SD, HEX)
 	return retval;
 }
 
 int BumbleBeeCnt::init_peripheral_system() {
 	int retval = 0;
 
-	scale.powerDown();
-
 	Wire.begin();
-
-	if (!bme.begin())
-		retval = -DEBUG_ID_BME280;
-	else
-		DEBUG_MSG_ARG(DEBUG_ID_BME280, HEX);
 
 	return retval;
 }
@@ -126,7 +116,7 @@ void BumbleBeeCnt::st_wakeup() {
 
 	attiny88.setSlaveAddr(sysdefs::res_ctrl::i2c_addr);
 
-	//get sreg from reset controller
+//get sreg from reset controller
 	i2c_reg = attiny88.getData();
 
 	if (i2c_reg == 0xff) {
@@ -185,23 +175,30 @@ void BumbleBeeCnt::st_init_peripherals() {
 }
 
 //State function
-void BumbleBeeCnt::st_wifi() {
-	static bool is_wifi_initialized = false;
-	uint16_t mcp_gpioab = 0;
+void BumbleBeeCnt::st_wifi_init() {
+	ap.initWifi();
+	InternalEvent(ST_WIFI, NULL);
+}
 
-	if (!is_wifi_initialized) {
-		ap.initWifi();
-		is_wifi_initialized = true;
-	}
+//State function
+void BumbleBeeCnt::st_wifi() {
+	uint16_t mcp_gpioab = 0;
+	states next_state = ST_WIFI;
+
 	ap.handleClient();
 
-	delay(10);
+	delay(100);
 
 	mcp_gpioab = mcp.readGPIOAB();
 	if (!(mcp_gpioab & sysdefs::mcp::wlan_en)) {
-		ap.stopWifi();
-		is_wifi_initialized = false;
+		next_state = ST_WIFI_END;
 	}
+	InternalEvent(next_state, NULL);
+}
+
+//State function
+void BumbleBeeCnt::st_wifi_end() {
+	ap.stopWifi();
 	InternalEvent(ST_READ_PERIPHERALS, NULL);
 }
 
@@ -212,7 +209,7 @@ void BumbleBeeCnt::st_read_peripherals() {
 	BumbleBeeCntData* peripheral_data;
 	peripheral_data = new BumbleBeeCntData;
 
-	//Weight measurement after fixed time intervals
+//Weight measurement after fixed time intervals
 	if (i2c_reg & sysdefs::res_ctrl::int_src_esp)
 		peripheral_data->weight = st_weight_meas();
 
@@ -288,10 +285,8 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 //	eval_peripheral_event(p_data->mcp_gpioa);
 
 //	InternalEvent(ST_WRITE_TO_SD, d_out); //string, den wir schreiben wollen konstruieren wir hier und übergeben ihn als event data.
-	if (p_data->tare)
-		next_state = ST_TARE;
-	else if (p_data->wlan_en)
-		next_state = ST_WIFI;
+	if (p_data->wlan_en)
+		next_state = ST_WIFI_INIT;
 	else
 		next_state = ST_PREPARE_SLEEP;
 
