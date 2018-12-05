@@ -13,6 +13,74 @@ String _tagH2end = "</h2>";
 String _temp = "Temperature: ";
 String _humidity = "Humidity: ";
 
+char WebContent::webpage_main[] = R"=====( 	
+<!DOCTYPE html>				
+<html>
+	<head>
+		<meta charset='utf-8'>
+		<title>Biozentrum Zoologie</title>
+		<link rel="stylesheet" href="css/style.css" type="text/css" />
+	</head>
+	<body>
+		<div class='page'>
+			<div class='header'>
+				<a href='/' id='logo'><img src='images/logo.jpg' alt=''/></a>
+			</div>
+			<div class='body'>
+				<p>
+					Willkommen auf <b>BumbleBee Logger</b>.
+				</p>
+				<div>
+					<form action='download'>
+						<button>Get data</button>
+					</form>
+				</div>
+			</div>
+			<div class='footer'>
+				<ul>
+					<li><a href='/'>Home</a></li>
+					<li><a href='/settings'>Settings</a></li>
+				</ul>
+			</div>
+		</div>
+	</body>
+</html>
+)=====";
+
+char WebContent::webpage_settings[] = R"=====( 	
+<!DOCTYPE html>				
+<html>
+	<head>
+		<meta charset='utf-8'>
+		<title>Biozentrum Zoologie</title>
+		<link rel="stylesheet" href="css/style.css" type="text/css" />
+	</head>
+	<body>
+		<div class='page'>
+			<div class='header'>
+				<a href='/' id='logo'><img src='images/logo.jpg' alt=''/></a>
+			</div>
+			<div class='body'>
+				<p>
+					Settings
+				</p>
+				<div>
+					<form action="" method="get">
+						<input type="text" name="time" placeholder="HHMMDDMMYYYY"/>
+					</form>
+				</div>
+			</div>
+			<div class='footer'>
+				<ul>
+					<li><a href='/'>Home</a></li>
+					<li><a href='/settings'>Settings</a></li>
+				</ul>
+			</div>
+		</div>
+	</body>
+</html>
+)=====";
+
 String WebContent::create_heading(String h) {
 	return _tagH1begin + h + _tagH1end;
 }

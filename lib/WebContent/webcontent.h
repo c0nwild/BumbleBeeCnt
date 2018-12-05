@@ -24,6 +24,9 @@ struct WebContent {
 
 	String output(void);
 
+	static char webpage_main[];
+	static char webpage_settings[];
+
 private:
 	std::vector<String> content;
 };

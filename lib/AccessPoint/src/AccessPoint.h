@@ -22,16 +22,23 @@
 
 class AccessPoint {
 private:
+	unsigned long ulReqcount;
 
 public:
 	static WebContent web_content;
-	static ESP8266WebServer server;
+	static WiFiServer server;
+	WiFiClient client;
+
+	static String _time;
+	static bool update_time;
 
 	AccessPoint();
 	virtual ~AccessPoint();
 
 	int initWifi();
 	int stopWifi();
+
+	String getTimeString();
 
 	void handleClient();
 };

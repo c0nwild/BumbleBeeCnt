@@ -6,7 +6,8 @@
  */
 
 #include <BumbleBeeCnt.h>
-#include <time.h>
+#include <locale>
+#include <sstream>
 
 void BumbleBeeCnt::trigger() {
 	ExternalEvent(ST_WAKEUP);
@@ -22,9 +23,6 @@ void BumbleBeeCnt::trigger() {
 
 int BumbleBeeCnt::init_peripheral_system_once() {
 	int retval = 0;
-	Ds1307::DateTime init_date = { 18, 9, 11, 0, 0, 0, 0 };
-
-	ds1307.setDateTime(&init_date);
 
 	//Only init once after power off.
 	mcp.begin();
@@ -46,11 +44,6 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 
 	DEBUG_MSG_ARG(DEBUG_ID_MCP23017, HEX)
 
-//	pinMode(chipSelectSD, OUTPUT);
-//	if (!SD.begin(chipSelectSD)) {
-//		retval |= -DEBUG_ID_SD;
-//	} else {
-//	DEBUG_MSG_ARG(DEBUG_ID_SD, HEX)
 	return retval;
 }
 
@@ -58,6 +51,13 @@ int BumbleBeeCnt::init_peripheral_system() {
 	int retval = 0;
 
 	Wire.begin();
+
+	pinMode(chipSelectSD, OUTPUT);
+	if (SD.begin(chipSelectSD)) {
+		DEBUG_MSG_ARG(DEBUG_ID_SD, HEX)
+	} else {
+		retval |= -DEBUG_ID_SD;
+	}
 
 	return retval;
 }
@@ -184,10 +184,44 @@ void BumbleBeeCnt::st_wifi_init() {
 void BumbleBeeCnt::st_wifi() {
 	uint16_t mcp_gpioab = 0;
 	states next_state = ST_WIFI;
+	String str_time = "";
+	String str_hour = "";
+	String str_min = "";
+	String str_day = "";
+	String str_mon = "";
+	String str_year = "";
+	Ds1307::DateTime dt = {0};
 
 	ap.handleClient();
 
-	delay(100);
+	str_time = ap.getTimeString();
+
+	if (str_time != "") {
+		Ds1307::DateTime init_date;
+		ds1307.getDateTime(&init_date);
+
+		str_hour = str_time.substring(0, 2);
+		str_min = str_time.substring(2, 4);
+		str_day = str_time.substring(4, 6);
+		str_mon = str_time.substring(6, 8);
+		str_year = str_time.substring(8, 10);
+
+		dt.hour = (uint8_t)str_hour.toInt();
+		dt.minute = (uint8_t)str_min.toInt();
+		dt.day = (uint8_t)str_day.toInt();
+		dt.month = (uint8_t)str_mon.toInt();
+		dt.year = (uint8_t)str_year.toInt();
+
+		DEBUG_MSG("hour: " + str_hour);
+		DEBUG_MSG("min: " + str_min);
+		DEBUG_MSG("day: " + str_day);
+		DEBUG_MSG("mon: " + str_mon);
+		DEBUG_MSG("year: " + str_year);
+
+		ds1307.setDateTime(&dt);
+	}
+
+	delay(1);
 
 	mcp_gpioab = mcp.readGPIOAB();
 	if (!(mcp_gpioab & sysdefs::mcp::wlan_en)) {
@@ -209,10 +243,6 @@ void BumbleBeeCnt::st_read_peripherals() {
 	BumbleBeeCntData* peripheral_data;
 	peripheral_data = new BumbleBeeCntData;
 
-//Weight measurement after fixed time intervals
-	if (i2c_reg & sysdefs::res_ctrl::int_src_esp)
-		peripheral_data->weight = st_weight_meas();
-
 	peripheral_data->temperature = bme.temp();
 	peripheral_data->humidity = bme.hum();
 	peripheral_data->pressure = bme.pres();
@@ -228,10 +258,9 @@ void BumbleBeeCnt::st_read_peripherals() {
 }
 
 void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
-	DEBUG_MSG_ARG(DEBUG_ID_ST_EVAL_PERIPHERAL_DATA, HEX)
+	DEBUG_MSG_ARG(DEBUG_ID_ST_EVAL_PERIPHERAL_DATA, HEX);
 
-	char date_buffer[80];
-	struct tm t;
+	String date;
 	BumbleBeeCntData *d_out;
 	states next_state = ST_EVAL_PERIPHERAL_DATA;
 
@@ -251,16 +280,12 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 	ds1307.getDateTime(&dt);
 
-	t.tm_hour = dt.hour;
-	t.tm_min = dt.minute;
-	t.tm_sec = dt.second;
-	t.tm_year = dt.year + 100;
-	t.tm_mon = dt.month;
-	t.tm_mday = dt.day;
-
-	strftime(date_buffer, 80, "%F_%T", &t);
-
-	String date(date_buffer);
+	date = 	String((uint16_t)dt.year + 2000) + "-" +
+			String(dt.month) + "-" +
+			String(dt.day) + "_" +
+			String(dt.hour) + ":" +
+			String(dt.minute) + ":" +
+			String(dt.second);
 	date += ",";
 	date += p_data->lb0;
 	date += ",";
@@ -281,16 +306,16 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	Serial.println(date);
 #endif
 //  TODO: Wird für Schreibvorgang auf SD benötigt. delete d_out muss dann wieder weg.
-	delete d_out;
+//	delete d_out;
 //	eval_peripheral_event(p_data->mcp_gpioa);
 
 //	InternalEvent(ST_WRITE_TO_SD, d_out); //string, den wir schreiben wollen konstruieren wir hier und übergeben ihn als event data.
-	if (p_data->wlan_en)
-		next_state = ST_WIFI_INIT;
-	else
-		next_state = ST_PREPARE_SLEEP;
+	if (p_data->wlan_en) {
+		InternalEvent(ST_WIFI_INIT, NULL);
+	} else {
+		InternalEvent(ST_WRITE_TO_SD, d_out);
+	}
 
-	InternalEvent(next_state, NULL);
 }
 
 void BumbleBeeCnt::st_write_to_sd(BumbleBeeCntData* d) {
