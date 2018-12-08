@@ -52,11 +52,18 @@ int BumbleBeeCnt::init_peripheral_system() {
 
 	Wire.begin();
 
+	if(bme.begin()){
+		DEBUG_MSG_ARG(DEBUG_ID_BME280, HEX)
+	}
+	else {
+		retval = -DEBUG_ID_BME280;
+	}
+
 	pinMode(chipSelectSD, OUTPUT);
 	if (SD.begin(chipSelectSD)) {
 		DEBUG_MSG_ARG(DEBUG_ID_SD, HEX)
 	} else {
-		retval |= -DEBUG_ID_SD;
+		retval = -DEBUG_ID_SD;
 	}
 
 	return retval;
@@ -66,12 +73,12 @@ void BumbleBeeCnt::st_do_tare() {
 	DEBUG_MSG("Tare...")
 	float tare_value = 0;
 
-	tare_value = st_weight_meas();
+	tare_value = weight_meas();
 
 	InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
 
-float BumbleBeeCnt::st_weight_meas() {
+float BumbleBeeCnt::weight_meas() {
 	DEBUG_MSG("Weight meas...")
 	float rv = 0;
 	uint8_t scale_status = 0;
@@ -248,6 +255,10 @@ void BumbleBeeCnt::st_read_peripherals() {
 	peripheral_data->pressure = bme.pres();
 
 	peripheral_data->mcp_gpioab = mcp.readGPIOAB();
+
+	if(i2c_reg & sysdefs::res_ctrl::int_src_esp){
+		peripheral_data->weight = weight_meas();
+	}
 
 	i2c_reg &=
 			~(sysdefs::res_ctrl::int_src_esp | sysdefs::res_ctrl::int_src_mcp);

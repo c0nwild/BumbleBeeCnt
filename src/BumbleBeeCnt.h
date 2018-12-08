@@ -57,13 +57,14 @@ private:
 	void st_wifi_end();
 	void st_init_peripherals();
 	void st_read_peripherals();
-	float st_weight_meas();
 	void st_eval_peripheral_data(BumbleBeeCntData *p_data);
 	void st_do_tare();
 	void st_write_to_sd(BumbleBeeCntData *d);
 	void st_prepare_sleep();
 	void st_goto_sleep();
 	void st_error(BumbleBeeCntData *d);
+
+	float weight_meas();
 
 	int init_peripheral_system();
 	int init_peripheral_system_once();
