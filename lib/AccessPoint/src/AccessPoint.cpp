@@ -11,14 +11,12 @@ WiFiServer AccessPoint::server;
 WebContent AccessPoint::web_content;
 
 String AccessPoint::_time;
+String AccessPoint::_scale_calib;
 bool AccessPoint::update_time;
 
 int AccessPoint::initWifi() {
 	const char *ssid = sysdefs::wifi::ssid.c_str();
 	const char *password = sysdefs::wifi::passphrase.c_str();
-
-	// setup globals
-	ulReqcount = 0;
 
 	// AP mode
 	WiFi.mode(WIFI_AP);
@@ -43,6 +41,58 @@ String AccessPoint::getTimeString() {
 	return _time_loc;
 }
 
+String AccessPoint::getScaleCalibString() {
+	String _scale_calib_loc = _scale_calib;
+	_scale_calib = "";
+	return _scale_calib_loc;
+}
+
+bool AccessPoint::sendHTMLcontent(WiFiClient client, String content) {
+	String sHeader = "HTTP/1.1 200 OK\r\n";
+	sHeader += "Content-Length: ";
+	sHeader += content.length();
+	sHeader += "\r\n";
+	sHeader += "Content-Type: text/html\r\n";
+	sHeader += "Connection: close\r\n";
+	sHeader += "\r\n";
+
+	client.print(sHeader);
+	client.print(content);
+	return true;
+}
+
+bool AccessPoint::setPeripheralData(BumbleBeeCntData p_data) {
+	peripheral_data = p_data;
+	return true;
+}
+
+String AccessPoint::retrieveParams(String parameter_string,
+		String parameter_name) {
+	String pvalue = "";
+	if (parameter_string.startsWith("?" + parameter_name)) {
+		int iEqu = parameter_string.indexOf("=");
+		if (iEqu >= 0) {
+			pvalue = parameter_string.substring(iEqu + 1,
+					parameter_string.length());
+		}
+	}
+	return pvalue;
+}
+
+String AccessPoint::getCurrentPath() {
+	DEBUG_MSG(current_path);
+	return current_path;
+}
+
+bool AccessPoint::setWeight(float w) {
+	peripheral_data.weight = w;
+	return true;
+}
+
+float AccessPoint::getWeight() {
+	return peripheral_data.weight;
+}
+
 void AccessPoint::handleClient() {
 	// Check if a client has connected
 	client = server.available();
@@ -51,7 +101,6 @@ void AccessPoint::handleClient() {
 	}
 
 	// Wait until the client sends some data
-	Serial.println("new client");
 	unsigned long ultimeout = millis() + 250;
 	while (!client.available() && (millis() < ultimeout)) {
 		delay(1);
@@ -97,17 +146,15 @@ void AccessPoint::handleClient() {
 		}
 	}
 
+	current_path = sPath;
+
 	///////////////////////////////////////////////////////////////////////////////
 	// output parameters to serial, you may connect e.g. an Arduino and react on it
 	///////////////////////////////////////////////////////////////////////////////
-	if (sParam.startsWith("?time")) {
-		int iEqu = sParam.indexOf("=");
-		if (iEqu >= 0) {
-			sCmd = sParam.substring(iEqu + 1, sParam.length());
-			_time = sCmd;
-			Serial.println(_time);
-		}
-	}
+	_time = retrieveParams(sParam, "rtcset");
+	Serial.println(_time);
+	_scale_calib = retrieveParams(sParam, "scale_calib");
+	Serial.println(_scale_calib);
 
 	///////////////////////////
 	// format the html response
@@ -118,19 +165,11 @@ void AccessPoint::handleClient() {
 	// format the html page
 	///////////////////////
 	if (sPath == "/") {
-		ulReqcount++;
-		sResponse = String(WebContent::webpage_main);
+		String content_head = WebContent::webpage_head;
+		String content_body = WebContent::webpage_body_main;
+		String content_tail = WebContent::webpage_tail;
 
-		sHeader = "HTTP/1.1 200 OK\r\n";
-		sHeader += "Content-Length: ";
-		sHeader += sResponse.length();
-		sHeader += "\r\n";
-		sHeader += "Content-Type: text/html\r\n";
-		sHeader += "Connection: close\r\n";
-		sHeader += "\r\n";
-
-		client.print(sHeader);
-		client.print(sResponse);
+		sendHTMLcontent(client, content_head+content_body+content_tail);
 
 	} else if (sPath == "/download") {
 		File logFile = SD.open("DATA.TXT");
@@ -148,18 +187,37 @@ void AccessPoint::handleClient() {
 		logFile.close();
 
 	} else if (sPath == "/settings") {
-		sResponse = String(WebContent::webpage_settings);
+		sendHTMLcontent(client, WebContent::webpage_settings);
 
-		sHeader = "HTTP/1.1 200 OK\r\n";
-		sHeader += "Content-Length: ";
-		sHeader += sResponse.length();
-		sHeader += "\r\n";
-		sHeader += "Content-Type: text/html\r\n";
-		sHeader += "Connection: close\r\n";
-		sHeader += "\r\n";
+	} else if (sPath == "/sensors") {
+		String content = "";
+		content = web_content.create_weight_entry(peripheral_data.weight);
+		web_content.clear();
+		web_content.append(content);
+		content = web_content.create_temp_entry(peripheral_data.temperature);
+		web_content.append(content);
+		content = web_content.create_humid_entry(peripheral_data.humidity);
+		web_content.append(content);
 
-		client.print(sHeader);
-		client.print(sResponse);
+		sendHTMLcontent(client, web_content.output());
+
+	} else if (sPath == "/scale_calib") {
+		String content = "";
+		float calib;
+		EEPROM.begin(128);
+		EEPROM.get(0, calib);
+		EEPROM.end();
+
+		web_content.clear();
+		content = web_content.create_weight_entry(peripheral_data.weight);
+		web_content.append(content);
+		content = "Current scale cal. factor: " + String(calib);
+		web_content.append(content);
+		content = web_content.create_input_form("scale_calib",
+				"Scale cal value");
+		web_content.append(content);
+
+		sendHTMLcontent(client, web_content.output());
 
 	} else if (sPath != "/") {
 		File logFile = SD.open(sPath);

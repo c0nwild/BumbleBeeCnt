@@ -18,11 +18,16 @@
 #include <ESP8266mDNS.h>
 #include <SPI.h>
 #include <SD.h>
+#include <EEPROM.h>
 #include <system_definitions.h>
+#include <types.h>
 
 class AccessPoint {
 private:
-	unsigned long ulReqcount;
+	BumbleBeeCntData peripheral_data;
+	String current_path;
+
+	String retrieveParams(String parameter_string, String parameter_name);
 
 public:
 	static WebContent web_content;
@@ -30,6 +35,7 @@ public:
 	WiFiClient client;
 
 	static String _time;
+	static String _scale_calib;
 	static bool update_time;
 
 	AccessPoint();
@@ -37,8 +43,14 @@ public:
 
 	int initWifi();
 	int stopWifi();
+	bool sendHTMLcontent(WiFiClient client, String content);
+	String getCurrentPath();
 
 	String getTimeString();
+	String getScaleCalibString();
+	bool setPeripheralData(BumbleBeeCntData p_data);
+	bool setWeight(float w);
+	float getWeight();
 
 	void handleClient();
 };

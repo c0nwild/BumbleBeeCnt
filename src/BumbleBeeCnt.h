@@ -26,22 +26,11 @@
 #include "../lib/Ds1307/Ds1307.h"
 #include <SD.h>
 #include <BME280I2C.h>
-#include <HX711_ADC.h>
+#include <HX711.h>
 #include <AccessPoint.h>
+#include <EEPROM.h>
+#include <types.h>
 #include "system_definitions.h"
-
-struct BumbleBeeCntData: public EventData {
-	String info;
-	float humidity = 0;
-	float temperature = 0;
-	float pressure = 0;
-	float weight = 0;
-	uint8_t lb0 = 0;
-	uint8_t lb1 = 0;
-	uint8_t wlan_en = 0;
-	uint8_t tare = 0;
-	uint16_t mcp_gpioab = 0;
-};
 
 class BumbleBeeCnt: public StateMachine {
 public:
@@ -53,7 +42,7 @@ private:
 
 	void st_wakeup();
 	void st_wifi_init();
-	void st_wifi();
+	void st_wifi(BumbleBeeCntData *d);
 	void st_wifi_end();
 	void st_init_peripherals();
 	void st_read_peripherals();
@@ -68,6 +57,7 @@ private:
 
 	int init_peripheral_system();
 	int init_peripheral_system_once();
+	void read_peripheral_data(BumbleBeeCntData *p_data);
 	void eval_peripheral_event(uint8_t mcp_gpioa);
 
 	BumbleBeeCntData ev_data;
@@ -119,7 +109,8 @@ private:
 		Ds1307 ds1307;
 
 		//Scale
-		HX711_ADC scale;
+//		HX711_ADC scale;
+		HX711 scale;
 
 		//Interrupt controller
 		i2c::I2CCom attiny88;

@@ -52,10 +52,9 @@ int BumbleBeeCnt::init_peripheral_system() {
 
 	Wire.begin();
 
-	if(bme.begin()){
+	if (bme.begin()) {
 		DEBUG_MSG_ARG(DEBUG_ID_BME280, HEX)
-	}
-	else {
+	} else {
 		retval = -DEBUG_ID_BME280;
 	}
 
@@ -71,41 +70,41 @@ int BumbleBeeCnt::init_peripheral_system() {
 
 void BumbleBeeCnt::st_do_tare() {
 	DEBUG_MSG("Tare...")
-	float tare_value = 0;
 
-	tare_value = weight_meas();
+	scale.tare();
 
 	InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
 
 float BumbleBeeCnt::weight_meas() {
 	DEBUG_MSG("Weight meas...")
-	float rv = 0;
-	uint8_t scale_status = 0;
-	long timeout = 0;
-	uint8_t meas_cnt = 0;
+	float rv = 0.0;
+	float calib = 0.0;
 
 	scale.begin(D3, D4);
 //	scale.start(2000);
-	scale.setCalFactor(sysdefs::scale::scale_factor);
-
-	timeout = millis();
-	while (true) {
-		scale_status = scale.update();
-		if (scale_status > 0)
-			++meas_cnt;
-		if (meas_cnt == 10) {
-			rv = scale.getData();
-			break;
-		}
-
-		if ((millis() - timeout) > 2000) {
-			DEBUG_MSG("Timeout!")
-			break;
-		}
+	EEPROM.begin(128);
+	EEPROM.get(0, calib);
+	EEPROM.end();
+	if (calib == 0.0) {
+		calib = 1.0;
 	}
-	scale.powerDown();
+	DEBUG_MSG("Calib factor: " + String(calib));
+
+	scale.set_scale(calib);
+
+	rv = scale.get_units(10);
+
+	scale.power_down();
 	return rv;
+}
+
+void BumbleBeeCnt::read_peripheral_data(BumbleBeeCntData *p_data) {
+	p_data->temperature = bme.temp();
+	p_data->humidity = bme.hum();
+	p_data->pressure = bme.pres();
+
+	p_data->mcp_gpioab = mcp.readGPIOAB();
 }
 
 void BumbleBeeCnt::eval_peripheral_event(uint8_t mcp_gpioa) {
@@ -148,6 +147,10 @@ void BumbleBeeCnt::st_wakeup() {
 	Serial.print("SRC: ");
 	Serial.print(src);
 	Serial.println();
+	Serial.print("Cal factor: ");
+	float calib = 0.0;
+	EEPROM.get(0, calib);
+	Serial.println(calib);
 #endif
 
 	InternalEvent(next_state, d);
@@ -183,13 +186,21 @@ void BumbleBeeCnt::st_init_peripherals() {
 
 //State function
 void BumbleBeeCnt::st_wifi_init() {
+	float weight;
+	weight = weight_meas();
+	DEBUG_MSG("Weight: " + String(weight));
+
 	ap.initWifi();
+
+	// Wir wollen eine initiale Gewichtsmessung für die Sensoranzeige.
+	ap.setWeight(weight);
 	InternalEvent(ST_WIFI, NULL);
 }
 
 //State function
-void BumbleBeeCnt::st_wifi() {
-	uint16_t mcp_gpioab = 0;
+void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
+	BumbleBeeCntData p_data;
+
 	states next_state = ST_WIFI;
 	String str_time = "";
 	String str_hour = "";
@@ -197,11 +208,17 @@ void BumbleBeeCnt::st_wifi() {
 	String str_day = "";
 	String str_mon = "";
 	String str_year = "";
-	Ds1307::DateTime dt = {0};
+	Ds1307::DateTime dt = { 0 };
 
-	ap.handleClient();
+	String str_scale_calib = "";
+	String webc_temp = "";
+	String current_page = "";
+
+	float weight;
+	weight = ap.getWeight();
 
 	str_time = ap.getTimeString();
+	str_scale_calib = ap.getScaleCalibString();
 
 	if (str_time != "") {
 		Ds1307::DateTime init_date;
@@ -213,11 +230,11 @@ void BumbleBeeCnt::st_wifi() {
 		str_mon = str_time.substring(6, 8);
 		str_year = str_time.substring(8, 10);
 
-		dt.hour = (uint8_t)str_hour.toInt();
-		dt.minute = (uint8_t)str_min.toInt();
-		dt.day = (uint8_t)str_day.toInt();
-		dt.month = (uint8_t)str_mon.toInt();
-		dt.year = (uint8_t)str_year.toInt();
+		dt.hour = (uint8_t) str_hour.toInt();
+		dt.minute = (uint8_t) str_min.toInt();
+		dt.day = (uint8_t) str_day.toInt();
+		dt.month = (uint8_t) str_mon.toInt();
+		dt.year = (uint8_t) str_year.toInt();
 
 		DEBUG_MSG("hour: " + str_hour);
 		DEBUG_MSG("min: " + str_min);
@@ -227,13 +244,29 @@ void BumbleBeeCnt::st_wifi() {
 
 		ds1307.setDateTime(&dt);
 	}
+	if (str_scale_calib != "") {
+		float calib;
+		calib = str_scale_calib.toFloat();
+		Serial.print("web_cal_factor: ");
+		Serial.println(calib);
+		EEPROM.begin(128);
+		EEPROM.put(0, calib);
+		EEPROM.commit();
+		EEPROM.end();
+		weight = weight_meas();
+	}
 
-	delay(1);
+	read_peripheral_data(&p_data);
 
-	mcp_gpioab = mcp.readGPIOAB();
-	if (!(mcp_gpioab & sysdefs::mcp::wlan_en)) {
+	ap.setPeripheralData(p_data);
+	ap.setWeight(weight);
+
+	ap.handleClient();
+
+	if (!(p_data.mcp_gpioab & sysdefs::mcp::wlan_en)) {
 		next_state = ST_WIFI_END;
 	}
+
 	InternalEvent(next_state, NULL);
 }
 
@@ -246,17 +279,14 @@ void BumbleBeeCnt::st_wifi_end() {
 //State function
 void BumbleBeeCnt::st_read_peripherals() {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_READ_PERIPHERALS, HEX)
+	states next_state = ST_EVAL_PERIPHERAL_DATA;
 
 	BumbleBeeCntData* peripheral_data;
 	peripheral_data = new BumbleBeeCntData;
 
-	peripheral_data->temperature = bme.temp();
-	peripheral_data->humidity = bme.hum();
-	peripheral_data->pressure = bme.pres();
+	read_peripheral_data(peripheral_data);
 
-	peripheral_data->mcp_gpioab = mcp.readGPIOAB();
-
-	if(i2c_reg & sysdefs::res_ctrl::int_src_esp){
+	if (i2c_reg & sysdefs::res_ctrl::int_src_esp) {
 		peripheral_data->weight = weight_meas();
 	}
 
@@ -265,7 +295,12 @@ void BumbleBeeCnt::st_read_peripherals() {
 
 	attiny88.sendData(i2c_reg);
 
-	InternalEvent(ST_EVAL_PERIPHERAL_DATA, peripheral_data);
+	if(peripheral_data->mcp_gpioab & sysdefs::mcp::tare){
+		next_state = ST_TARE;
+		peripheral_data = NULL;
+	}
+
+	InternalEvent(next_state, peripheral_data);
 }
 
 void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
@@ -273,7 +308,6 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 	String date;
 	BumbleBeeCntData *d_out;
-	states next_state = ST_EVAL_PERIPHERAL_DATA;
 
 	p_data->lb0 = (p_data->mcp_gpioab & sysdefs::mcp::lb0) ? 1 : 0;
 	p_data->lb1 = (p_data->mcp_gpioab & sysdefs::mcp::lb1) ? 1 : 0;
@@ -291,12 +325,9 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 	ds1307.getDateTime(&dt);
 
-	date = 	String((uint16_t)dt.year + 2000) + "-" +
-			String(dt.month) + "-" +
-			String(dt.day) + "_" +
-			String(dt.hour) + ":" +
-			String(dt.minute) + ":" +
-			String(dt.second);
+	date = String((uint16_t) dt.year + 2000) + "-" + String(dt.month) + "-"
+			+ String(dt.day) + "_" + String(dt.hour) + ":" + String(dt.minute)
+			+ ":" + String(dt.second);
 	date += ",";
 	date += p_data->lb0;
 	date += ",";
@@ -359,6 +390,8 @@ void BumbleBeeCnt::st_prepare_sleep() {
 	Serial.print(i2c_reg, BIN);
 	Serial.println();
 #endif
+	//Hier den MCP zurücksetzen, falls während St.M. durchlaufs ein INT angefallen ist.
+	mcp.readGPIOAB();
 	attiny88.sendData(i2c_reg);
 }
 

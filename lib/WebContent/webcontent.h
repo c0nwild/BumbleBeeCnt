@@ -21,11 +21,16 @@ struct WebContent {
 
 	String create_temp_entry(float t);
 	String create_humid_entry(float h);
+	String create_weight_entry(float w);
+
+	String create_input_form(String name, String placeholder);
 
 	String output(void);
 
-	static char webpage_main[];
+	static char webpage_body_main[];
 	static char webpage_settings[];
+	static char webpage_head[];
+	static char webpage_tail[];
 
 private:
 	std::vector<String> content;
