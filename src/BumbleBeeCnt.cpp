@@ -93,7 +93,7 @@ float BumbleBeeCnt::weight_meas() {
 
 	scale.set_scale(calib);
 
-	rv = scale.get_units(10);
+	rv = scale.get_units();
 
 	scale.power_down();
 	return rv;
