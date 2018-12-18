@@ -49,7 +49,7 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 
 int BumbleBeeCnt::init_peripheral_system() {
 	int retval = 0;
-	double scale_offset = 0;
+	long scale_offset = 0;
 
 	Wire.begin();
 
@@ -60,10 +60,12 @@ int BumbleBeeCnt::init_peripheral_system() {
 	}
 
 	EEPROM.begin(128);
-	EEPROM.get(4, scale_offset);
+	EEPROM.get(8, scale_offset);
 	EEPROM.end();
 
-	scale.set_offset(scale_offset);
+	DEBUG_MSG("Offset: " + String(scale_offset))
+
+	scale.setTareOffset(scale_offset);
 
 	pinMode(chipSelectSD, OUTPUT);
 	if (SD.begin(chipSelectSD)) {
@@ -76,16 +78,26 @@ int BumbleBeeCnt::init_peripheral_system() {
 }
 
 void BumbleBeeCnt::do_tare() {
-	double offset = 0;
+	long offset = 0;
 	DEBUG_MSG("Tare...")
 
-	scale.tare();
-	offset=scale.get_offset();
+	//Just trigger weight measurement
+	(void)weight_meas();
+
+	DEBUG_MSG("Tare weight meas: " + String(scale.getData()))
+
+	offset = scale.smoothedData();
+
+	scale.setTareOffset(offset);
+
+	DEBUG_MSG("Tare offset: " + String(offset))
 
 	EEPROM.begin(128);
-	EEPROM.write(4, offset);
+	EEPROM.put(8, offset);
 	EEPROM.commit();
 	EEPROM.end();
+
+	delay(5000);
 
 	InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
@@ -94,6 +106,9 @@ float BumbleBeeCnt::weight_meas() {
 	DEBUG_MSG("Weight meas...")
 	float rv = 0.0;
 	float calib = 0.0;
+	unsigned long timeout = 0;
+	uint8_t scale_status = 0;
+	uint8_t meas_cnt = 0;
 
 	scale.begin(D3, D4);
 //	scale.start(2000);
@@ -104,12 +119,27 @@ float BumbleBeeCnt::weight_meas() {
 		calib = 1.0;
 	}
 	DEBUG_MSG("Calib factor: " + String(calib));
+	DEBUG_MSG("Offset: " + String(scale.getTareOffset()))
 
-	scale.set_scale(calib);
+	scale.setCalFactor(calib);
 
-	rv = scale.get_units();
+	timeout = millis();
+		while (true) {
+			scale_status = scale.update();
+			if (scale_status > 0)
+				++meas_cnt;
+			if (meas_cnt == 10) {
+				rv = scale.getData();
+				break;
+			}
 
-	scale.power_down();
+			if ((millis() - timeout) > 2000) {
+				DEBUG_MSG("Timeout!")
+				break;
+			}
+		}
+
+	scale.powerDown();
 	return rv;
 }
 
@@ -260,6 +290,7 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 	}
 	if (str_scale_calib.startsWith("cal")) {
 		float calib;
+		str_scale_calib = str_scale_calib.substring(3,str_scale_calib.length());
 		calib = str_scale_calib.toFloat();
 		Serial.print("web_cal_factor: ");
 		Serial.println(calib);

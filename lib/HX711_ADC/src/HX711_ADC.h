@@ -57,10 +57,10 @@ class HX711_ADC
 		long getTareOffset();
 		void setTareOffset(long newoffset);
 		uint8_t update(); 							//if conversion is ready; read out 24 bit data and add to data set
+		long smoothedData();
 
 	protected:
 		uint8_t conversion24bit(); 					//if conversion is ready: returns 24 bit data and starts the next conversion
-		long smoothedData();
 		uint8_t sckPin; 							//HX711 pd_sck pin
 		uint8_t doutPin; 							//HX711 dout pin
 		uint8_t GAIN;
