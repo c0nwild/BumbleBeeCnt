@@ -97,8 +97,6 @@ void BumbleBeeCnt::do_tare() {
 	EEPROM.commit();
 	EEPROM.end();
 
-	delay(5000);
-
 	InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
 
