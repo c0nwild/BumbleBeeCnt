@@ -444,7 +444,7 @@ void BumbleBeeCnt::st_prepare_sleep() {
 
 void BumbleBeeCnt::st_goto_sleep() {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_GOTO_SLEEP, HEX)
-	ESP.deepSleep(10E6);
+	ESP.deepSleep(600e6);
 //	delay(1000);
 //	ESP.restart();
 //	InternalEvent(ST_WAKEUP, NULL);
