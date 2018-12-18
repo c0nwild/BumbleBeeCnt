@@ -49,6 +49,7 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 
 int BumbleBeeCnt::init_peripheral_system() {
 	int retval = 0;
+	double scale_offset = 0;
 
 	Wire.begin();
 
@@ -57,6 +58,12 @@ int BumbleBeeCnt::init_peripheral_system() {
 	} else {
 		retval = -DEBUG_ID_BME280;
 	}
+
+	EEPROM.begin(128);
+	EEPROM.get(4, scale_offset);
+	EEPROM.end();
+
+	scale.set_offset(scale_offset);
 
 	pinMode(chipSelectSD, OUTPUT);
 	if (SD.begin(chipSelectSD)) {
@@ -68,10 +75,17 @@ int BumbleBeeCnt::init_peripheral_system() {
 	return retval;
 }
 
-void BumbleBeeCnt::st_do_tare() {
+void BumbleBeeCnt::do_tare() {
+	double offset = 0;
 	DEBUG_MSG("Tare...")
 
 	scale.tare();
+	offset=scale.get_offset();
+
+	EEPROM.begin(128);
+	EEPROM.write(4, offset);
+	EEPROM.commit();
+	EEPROM.end();
 
 	InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
@@ -244,7 +258,7 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 
 		ds1307.setDateTime(&dt);
 	}
-	if (str_scale_calib != "") {
+	if (str_scale_calib.startsWith("cal")) {
 		float calib;
 		calib = str_scale_calib.toFloat();
 		Serial.print("web_cal_factor: ");
@@ -254,6 +268,8 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 		EEPROM.commit();
 		EEPROM.end();
 		weight = weight_meas();
+	} else if (str_scale_calib == "tare") {
+		do_tare();
 	}
 
 	read_peripheral_data(&p_data);
@@ -295,7 +311,7 @@ void BumbleBeeCnt::st_read_peripherals() {
 
 	attiny88.sendData(i2c_reg);
 
-	if(peripheral_data->mcp_gpioab & sysdefs::mcp::tare){
+	if (peripheral_data->mcp_gpioab & sysdefs::mcp::tare) {
 		next_state = ST_TARE;
 		peripheral_data = NULL;
 	}
@@ -303,6 +319,7 @@ void BumbleBeeCnt::st_read_peripherals() {
 	InternalEvent(next_state, peripheral_data);
 }
 
+//State function
 void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_EVAL_PERIPHERAL_DATA, HEX);
 
@@ -358,6 +375,11 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 		InternalEvent(ST_WRITE_TO_SD, d_out);
 	}
 
+}
+
+void BumbleBeeCnt::st_tare(){
+	do_tare();
+	InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
 
 void BumbleBeeCnt::st_write_to_sd(BumbleBeeCntData* d) {
