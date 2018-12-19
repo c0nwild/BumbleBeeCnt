@@ -93,6 +93,11 @@ float AccessPoint::getWeight() {
 	return peripheral_data.weight;
 }
 
+bool AccessPoint::setDateTime(Ds1307::DateTime d) {
+	dt = d;
+	return true;
+}
+
 void AccessPoint::handleClient() {
 	// Check if a client has connected
 	client = server.available();
@@ -191,8 +196,12 @@ void AccessPoint::handleClient() {
 
 	} else if (sPath == "/sensors") {
 		String content = "";
-		content = web_content.create_weight_entry(peripheral_data.weight);
 		web_content.clear();
+		content = "Time: " + String((uint16_t) dt.year + 2000) + "-" + String(dt.month) + "-"
+				+ String(dt.day) + "_" + String(dt.hour) + ":" + String(dt.minute)
+				+ ":" + String(dt.second);
+		web_content.append(content);
+		content = web_content.create_weight_entry(peripheral_data.weight);
 		web_content.append(content);
 		content = web_content.create_temp_entry(peripheral_data.temperature);
 		web_content.append(content);

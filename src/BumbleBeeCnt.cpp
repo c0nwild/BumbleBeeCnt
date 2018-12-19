@@ -238,6 +238,7 @@ void BumbleBeeCnt::st_wifi_init() {
 //State function
 void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 	BumbleBeeCntData p_data;
+	static uint8_t weight_trigger = 0;
 
 	states next_state = ST_WIFI;
 	String str_time = "";
@@ -254,6 +255,9 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 
 	float weight;
 	weight = ap.getWeight();
+	if (++weight_trigger == 0){
+		weight = weight_meas();
+	}
 
 	str_time = ap.getTimeString();
 	str_scale_calib = ap.getScaleCalibString();
@@ -296,6 +300,9 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 	} else if (str_scale_calib == "tare") {
 		do_tare();
 	}
+
+	ds1307.getDateTime(&dt);
+	ap.setDateTime(dt);
 
 	read_peripheral_data(&p_data);
 
@@ -364,7 +371,6 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	Serial.print("GPIOAB: 0b");
 	Serial.println(p_data->mcp_gpioab, BIN);
 #endif
-
 	ds1307.getDateTime(&dt);
 
 	date = String((uint16_t) dt.year + 2000) + "-" + String(dt.month) + "-"

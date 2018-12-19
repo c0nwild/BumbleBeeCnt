@@ -19,6 +19,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <EEPROM.h>
+#include <Ds1307.h>
 #include <system_definitions.h>
 #include <types.h>
 
@@ -26,6 +27,8 @@ class AccessPoint {
 private:
 	BumbleBeeCntData peripheral_data;
 	String current_path;
+
+	Ds1307::DateTime dt;
 
 	String retrieveParams(String parameter_string, String parameter_name);
 
@@ -49,6 +52,7 @@ public:
 	String getTimeString();
 	String getScaleCalibString();
 	bool setPeripheralData(BumbleBeeCntData p_data);
+	bool setDateTime(Ds1307::DateTime d);
 	bool setWeight(float w);
 	float getWeight();
 
