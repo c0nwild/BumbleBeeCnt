@@ -104,6 +104,7 @@ float BumbleBeeCnt::weight_meas() {
 	DEBUG_MSG("Weight meas...")
 	float rv = 0.0;
 	float calib = 0.0;
+	long offset = 0;
 	unsigned long timeout = 0;
 	uint8_t scale_status = 0;
 	uint8_t meas_cnt = 0;
@@ -112,10 +113,12 @@ float BumbleBeeCnt::weight_meas() {
 //	scale.start(2000);
 	EEPROM.begin(128);
 	EEPROM.get(0, calib);
+	EEPROM.get(8, offset);
 	EEPROM.end();
 	if (calib == 0.0) {
 		calib = 1.0;
 	}
+
 	DEBUG_MSG("Calib factor: " + String(calib));
 	DEBUG_MSG("Offset: " + String(scale.getTareOffset()))
 
