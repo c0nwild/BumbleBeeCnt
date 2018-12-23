@@ -123,6 +123,7 @@ float BumbleBeeCnt::weight_meas() {
 	DEBUG_MSG("Offset: " + String(scale.getTareOffset()))
 
 	scale.setCalFactor(calib);
+	scale.setTareOffset(offset);
 
 	timeout = millis();
 		while (true) {
