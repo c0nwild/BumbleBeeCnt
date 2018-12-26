@@ -11,7 +11,7 @@
 
 #include <Arduino.h>
 
-#define SAMPLES 			16									// no of samples in moving average data set, value must be 4, 8, 16, 32 or 64
+#define SAMPLES 			8									// no of samples in moving average data set, value must be 4, 8, 16, 32 or 64
 #define IGN_HIGH_SAMPLE 	1 									// adds one sample to the set and ignore peak high sample, value must be 0 or 1
 #define IGN_LOW_SAMPLE 		1 									// adds one sample to the set and ignore peak low sample, value must be 0 or 1
 

@@ -7,7 +7,7 @@
 
 #include "AccessPoint.h"
 
-WiFiServer AccessPoint::server;
+WiFiServer AccessPoint::server(80);
 WebContent AccessPoint::web_content;
 
 String AccessPoint::_time;

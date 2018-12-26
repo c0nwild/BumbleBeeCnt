@@ -113,11 +113,14 @@ float BumbleBeeCnt::weight_meas() {
 //	scale.start(2000);
 	EEPROM.begin(128);
 	EEPROM.get(0, calib);
-	EEPROM.get(8, offset);
 	EEPROM.end();
 	if (calib == 0.0) {
 		calib = 1.0;
 	}
+
+	EEPROM.begin(128);
+	EEPROM.get(8, offset);
+	EEPROM.end();
 
 	DEBUG_MSG("Calib factor: " + String(calib));
 	DEBUG_MSG("Offset: " + String(scale.getTareOffset()))
@@ -130,7 +133,7 @@ float BumbleBeeCnt::weight_meas() {
 			scale_status = scale.update();
 			if (scale_status > 0)
 				++meas_cnt;
-			if (meas_cnt == 10) {
+			if (meas_cnt == 8) {
 				rv = scale.getData();
 				break;
 			}
@@ -454,7 +457,7 @@ void BumbleBeeCnt::st_prepare_sleep() {
 
 void BumbleBeeCnt::st_goto_sleep() {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_GOTO_SLEEP, HEX)
-	ESP.deepSleep(600e6);
+	ESP.deepSleep(10e6);
 //	delay(1000);
 //	ESP.restart();
 //	InternalEvent(ST_WAKEUP, NULL);
