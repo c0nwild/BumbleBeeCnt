@@ -134,7 +134,7 @@ float HX711_ADC::getData() // return fresh data from the moving average data set
 	long k = 0;
 	long data = 0;
 	data = smoothedData() - tareOffset;
-	data = (data >> divBit);
+	data /= divBit;
 	float x = (float)data / calFactor;
 	return x;
 }
@@ -142,7 +142,7 @@ float HX711_ADC::getData() // return fresh data from the moving average data set
 long HX711_ADC::smoothedData() 
 {
 	long data = 0;
-	long L = 0xFFFFFF;
+	long L = 0xFFFFFFFF;
 	long H = 0x00;
 	for (uint8_t r = 0; r < DATA_SET; r++) {
 		if (L > dataSampleSet[r]) L = dataSampleSet[r]; // find lowest value
@@ -182,18 +182,6 @@ uint8_t HX711_ADC::conversion24bit()  //read 24 bit data and start the next conv
 	if(data > 0)  {
 		convRslt++;
 		dataSampleSet[readIndex] = (long)data;
-		if(doTare) {
-			if (tareTimes < DATA_SET) {
-			tareTimes++;
-			}
-			else {
-				tareOffset = smoothedData();
-				tareTimes = 0;
-				doTare = 0;
-				tareStatus = 1;
-				convRslt++;
-			}
-		}
 	}
 }
 

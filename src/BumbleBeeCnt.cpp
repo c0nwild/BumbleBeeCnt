@@ -82,7 +82,7 @@ void BumbleBeeCnt::do_tare() {
 	DEBUG_MSG("Tare...")
 
 	//Just trigger weight measurement
-	(void)weight_meas();
+	(void) weight_meas();
 
 	DEBUG_MSG("Tare weight meas: " + String(scale.getData()))
 
@@ -129,30 +129,30 @@ float BumbleBeeCnt::weight_meas() {
 	scale.setTareOffset(offset);
 
 	timeout = millis();
-		while (true) {
-			scale_status = scale.update();
-			if (scale_status > 0)
-				++meas_cnt;
-			if (meas_cnt == 8) {
-				rv = scale.getData();
-				break;
-			}
+	while (meas_cnt < 10) {
+		scale_status = scale.update();
+		if (scale_status > 0)
+			++meas_cnt;
 
-			if ((millis() - timeout) > 2000) {
-				DEBUG_MSG("Timeout!")
-				break;
-			}
+		if ((millis() - timeout) > 2000) {
+			DEBUG_MSG("Timeout!")
+			break;
 		}
+	}
+	rv = scale.getData();
 
 	scale.powerDown();
+	DEBUG_MSG("Weight is: " + String(rv));
 	return rv;
 }
 
-void BumbleBeeCnt::read_peripheral_data(BumbleBeeCntData *p_data) {
-	p_data->temperature = bme.temp();
-	p_data->humidity = bme.hum();
-	p_data->pressure = bme.pres();
+void BumbleBeeCnt::read_sensors(BumbleBeeCntData *s_data) {
+	s_data->temperature = bme.temp();
+	s_data->humidity = bme.hum();
+	s_data->pressure = bme.pres();
+}
 
+void BumbleBeeCnt::read_port_expander(BumbleBeeCntData *p_data) {
 	p_data->mcp_gpioab = mcp.readGPIOAB();
 }
 
@@ -262,7 +262,7 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 
 	float weight;
 	weight = ap.getWeight();
-	if (++weight_trigger == 0){
+	if (++weight_trigger == 0) {
 		weight = weight_meas();
 	}
 
@@ -295,7 +295,8 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 	}
 	if (str_scale_calib.startsWith("cal")) {
 		float calib;
-		str_scale_calib = str_scale_calib.substring(3,str_scale_calib.length());
+		str_scale_calib = str_scale_calib.substring(3,
+				str_scale_calib.length());
 		calib = str_scale_calib.toFloat();
 		Serial.print("web_cal_factor: ");
 		Serial.println(calib);
@@ -311,7 +312,8 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 	ds1307.getDateTime(&dt);
 	ap.setDateTime(dt);
 
-	read_peripheral_data(&p_data);
+	read_sensors(&p_data);
+	read_port_expander(&p_data);
 
 	ap.setPeripheralData(p_data);
 	ap.setWeight(weight);
@@ -339,7 +341,8 @@ void BumbleBeeCnt::st_read_peripherals() {
 	BumbleBeeCntData* peripheral_data;
 	peripheral_data = new BumbleBeeCntData;
 
-	read_peripheral_data(peripheral_data);
+	read_sensors(peripheral_data);
+	read_port_expander(peripheral_data);
 
 	if (i2c_reg & sysdefs::res_ctrl::int_src_esp) {
 		peripheral_data->weight = weight_meas();
@@ -373,6 +376,7 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	d_out = new BumbleBeeCntData;
 
 	Ds1307::DateTime dt;
+	DEBUG_MSG("Weight meas...")
 
 #ifdef SERIAL_DEBUG
 	Serial.print("GPIOAB: 0b");
@@ -402,11 +406,7 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 #ifdef SERIAL_DEBUG
 	Serial.println(date);
 #endif
-//  TODO: Wird für Schreibvorgang auf SD benötigt. delete d_out muss dann wieder weg.
-//	delete d_out;
-//	eval_peripheral_event(p_data->mcp_gpioa);
 
-//	InternalEvent(ST_WRITE_TO_SD, d_out); //string, den wir schreiben wollen konstruieren wir hier und übergeben ihn als event data.
 	if (p_data->wlan_en) {
 		InternalEvent(ST_WIFI_INIT, NULL);
 	} else {
@@ -415,8 +415,18 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 }
 
-void BumbleBeeCnt::st_tare(){
-	do_tare();
+void BumbleBeeCnt::st_tare() {
+	BumbleBeeCntData data;
+
+	//Todo: Implement timeout counter. This is not elegant but works for the moment.
+	delay(1000);
+
+	read_port_expander(&data);
+
+	if (data.mcp_gpioab & sysdefs::mcp::tare) {
+		do_tare();
+	}
+
 	InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
 
@@ -457,10 +467,7 @@ void BumbleBeeCnt::st_prepare_sleep() {
 
 void BumbleBeeCnt::st_goto_sleep() {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_GOTO_SLEEP, HEX)
-	ESP.deepSleep(10e6);
-//	delay(1000);
-//	ESP.restart();
-//	InternalEvent(ST_WAKEUP, NULL);
+	ESP.deepSleep(5e6);
 }
 
 void BumbleBeeCnt::st_error(BumbleBeeCntData *d) {

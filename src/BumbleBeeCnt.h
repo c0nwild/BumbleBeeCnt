@@ -58,7 +58,8 @@ private:
 
 	int init_peripheral_system();
 	int init_peripheral_system_once();
-	void read_peripheral_data(BumbleBeeCntData *p_data);
+	void read_sensors(BumbleBeeCntData *s_data);
+	void read_port_expander(BumbleBeeCntData *p_data);
 	void eval_peripheral_event(uint8_t mcp_gpioa);
 
 	BumbleBeeCntData ev_data;

@@ -71,7 +71,7 @@ class HX711_ADC
 		long timeStamp;
 		uint8_t isFirst = 1;
 		uint8_t tareTimes;
-		const uint8_t divBit = DIVB;
+		const uint8_t divBit = SAMPLES;
 		bool doTare;
 		bool startStatus;
 		uint8_t convRslt;
