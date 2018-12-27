@@ -467,7 +467,7 @@ void BumbleBeeCnt::st_prepare_sleep() {
 
 void BumbleBeeCnt::st_goto_sleep() {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_GOTO_SLEEP, HEX)
-	ESP.deepSleep(5e6);
+	ESP.deepSleep(600e6);
 }
 
 void BumbleBeeCnt::st_error(BumbleBeeCntData *d) {
