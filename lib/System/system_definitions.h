@@ -33,7 +33,10 @@ namespace wifi {
 const String ssid = "ESPap";
 const String passphrase = "thereisnospoon";
 }//wifi
-}//sysdefs
 
+namespace general {
+const String log_filename = "data.txt";
+}//general
+}//sysdefs
 
 #endif /* SRC_SYSTEM_DEFINITIONS_H_ */

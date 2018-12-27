@@ -64,7 +64,7 @@ private:
 
 	BumbleBeeCntData ev_data;
 
-	String data_file_name = "data.txt";
+	String data_file_name = sysdefs::general::log_filename;
 
 	uint8_t i2c_reg;
 
