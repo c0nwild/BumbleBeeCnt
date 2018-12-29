@@ -11,14 +11,6 @@
 
 void BumbleBeeCnt::trigger() {
 	ExternalEvent(ST_WAKEUP);
-//	BEGIN_TRANSITION_MAP
-//	TRANSITION_MAP_ENTRY(ST_INIT_PERIPHERALS)//ST_WAKEUP
-//	TRANSITION_MAP_ENTRY(EVENT_IGNORED)//ST_INIT_PERIPHERALS
-//	TRANSITION_MAP_ENTRY(EVENT_IGNORED)//ST_READ_PERIPHERALS
-//	TRANSITION_MAP_ENTRY(EVENT_IGNORED)//ST_PREPARE_SLEEP
-//	TRANSITION_MAP_ENTRY(EVENT_IGNORED)//ST_GOTO_SLEEP
-//	TRANSITION_MAP_ENTRY(EVENT_IGNORED)//ST_ERROR
-//	END_TRANSITION_MAP(NULL)
 }
 
 int BumbleBeeCnt::init_peripheral_system_once() {
@@ -217,7 +209,7 @@ void BumbleBeeCnt::st_init_peripherals() {
 	if (retval < 0) {
 		next_state = ST_ERROR;
 		data = new BumbleBeeCntData;
-		data->info = "init_peripherals failed";
+		data->info = "init_peripherals failed with code " + String(retval);
 	} else {
 		next_state = ST_READ_PERIPHERALS;
 		data = NULL;
