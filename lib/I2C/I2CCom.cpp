@@ -9,14 +9,9 @@
 
 namespace i2c {
 
-I2CCom::I2CCom() {
-	// TODO Auto-generated constructor stub
+I2CCom::I2CCom() {}
 
-}
-
-I2CCom::~I2CCom() {
-	// TODO Auto-generated destructor stub
-}
+I2CCom::~I2CCom() {}
 
 bool I2CCom::sendData(uint8_t data) {
 	uint8_t rv;

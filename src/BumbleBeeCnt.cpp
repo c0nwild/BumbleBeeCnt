@@ -155,9 +155,7 @@ void BumbleBeeCnt::eval_peripheral_event(uint8_t mcp_gpioa) {
 //State function
 void BumbleBeeCnt::st_wakeup() {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_WAKEUP, HEX)
-	/* TODO: Hier den Attiny 88 über I2C abfragen, solange keine Freigabe vomconversion Wemos erfolgt
-	 * darf der Tiny keinen Reset durchführen.
-	 */
+
 	states next_state = ST_INIT_PERIPHERALS;
 	BumbleBeeCntData *d = NULL;
 
@@ -441,7 +439,6 @@ void BumbleBeeCnt::st_write_to_sd(BumbleBeeCntData* d) {
 
 void BumbleBeeCnt::st_prepare_sleep() {
 	InternalEvent(ST_GOTO_SLEEP, NULL);
-//TODO: Hier dem ATTiny 88 über i2c bescheid geben, dass er wieder resetten darf.
 	i2c_reg |= sysdefs::res_ctrl::allowreset;
 //	Wire.begin();
 //	Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);

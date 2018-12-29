@@ -18,14 +18,9 @@ extern "C" {
 
 namespace rtc {
 
-SReg::SReg() {
-	// TODO Auto-generated constructor stub
+SReg::SReg() {}
 
-}
-
-SReg::~SReg() {
-	// TODO Auto-generated destructor stub
-}
+SReg::~SReg() {}
 
 void SReg::init() {
 	rtc_sreg_t s = { .sreg = 0, .sreg_mirror = 0xffffffff };
