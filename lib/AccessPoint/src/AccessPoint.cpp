@@ -27,13 +27,9 @@ int AccessPoint::initWifi() {
 	return 0;
 }
 
-AccessPoint::AccessPoint() {
-	// TODO Auto-generated constructor stub
-}
+AccessPoint::AccessPoint() {}
 
-AccessPoint::~AccessPoint() {
-	// TODO Auto-generated destructor stub
-}
+AccessPoint::~AccessPoint() {}
 
 String AccessPoint::getTimeString() {
 	String _time_loc = _time;
