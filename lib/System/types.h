@@ -22,6 +22,7 @@ struct BumbleBeeCntData: public EventData {
 	uint8_t wlan_en = 0;
 	uint8_t tare = 0;
 	uint16_t mcp_gpioab = 0;
+	int v_batt = 0;
 };
 
 #endif /* LIB_SYSTEM_TYPES_H_ */
