@@ -8,6 +8,8 @@
 #ifndef SRC_SYSTEM_DEFINITIONS_H_
 #define SRC_SYSTEM_DEFINITIONS_H_
 
+#include <Arduino.h>
+
 namespace sysdefs {
 
 namespace res_ctrl {
@@ -37,6 +39,14 @@ const String passphrase = "thereisnospoon";
 namespace general {
 const String log_filename = "data.txt";
 }//general
+
+namespace rtc {
+const uint8_t rtc_memstart = 65;
+const uint8_t rtc_memsize = 127;
+const uint8_t rtc_sreg = (rtc_memstart + 0); //2x uint32 needs 8 bytes
+const uint8_t rtc_eventcnt = (rtc_memstart + 8); //2x unsinged int (32bit) needs 8 bytes
+}//rtc
 }//sysdefs
+
 
 #endif /* SRC_SYSTEM_DEFINITIONS_H_ */
