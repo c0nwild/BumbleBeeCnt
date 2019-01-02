@@ -89,7 +89,13 @@ class Ds1307
          */
         void setDateTime(DateTime* dt);
 
+        long getTimestamp();
+
     private:
+
+        static const uint8_t daysInMonth [];
+        uint16_t date2days(uint16_t y, uint8_t m, uint8_t d);
+        long time2long(uint16_t days, uint8_t h, uint8_t m, uint8_t s);
 
         uint8_t _i2c_address;
 

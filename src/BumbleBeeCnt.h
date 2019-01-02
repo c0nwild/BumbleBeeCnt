@@ -31,6 +31,7 @@
 #include <EEPROM.h>
 #include <types.h>
 #include "system_definitions.h"
+#include <EventCounter.h>
 
 class BumbleBeeCnt: public StateMachine {
 public:
@@ -119,6 +120,9 @@ private:
 
 		//WebServer
 		AccessPoint ap;
+
+		//RTC ram based event counter
+		rtc::EventCounter ec;
 
 	}; /* class BUmbleBeeCnt */
 

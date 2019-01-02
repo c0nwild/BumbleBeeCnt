@@ -6,8 +6,7 @@
  */
 
 #include <BumbleBeeCnt.h>
-#include <locale>
-#include <sstream>
+#include <time.h>
 
 void BumbleBeeCnt::trigger() {
 	ExternalEvent(ST_WAKEUP);
@@ -142,6 +141,7 @@ void BumbleBeeCnt::read_sensors(BumbleBeeCntData *s_data) {
 	s_data->temperature = bme.temp();
 	s_data->humidity = bme.hum();
 	s_data->pressure = bme.pres();
+	s_data->v_batt = analogRead(A0);
 }
 
 void BumbleBeeCnt::read_port_expander(BumbleBeeCntData *p_data) {
@@ -355,46 +355,66 @@ void BumbleBeeCnt::st_read_peripherals() {
 void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_EVAL_PERIPHERAL_DATA, HEX);
 
-	String date;
+	String log_str = "";
+
 	BumbleBeeCntData *d_out;
+	int ev_cnt = 0;
+
+	String date_str = "";
+	Ds1307::DateTime dt;
+	long ts = 0;
 
 	p_data->lb0 = (p_data->mcp_gpioab & sysdefs::mcp::lb0) ? 1 : 0;
 	p_data->lb1 = (p_data->mcp_gpioab & sysdefs::mcp::lb1) ? 1 : 0;
 	p_data->wlan_en = (p_data->mcp_gpioab & sysdefs::mcp::wlan_en) ? 1 : 0;
 	p_data->tare = (p_data->mcp_gpioab & sysdefs::mcp::tare) ? 1 : 0;
 
+	ds1307.getDateTime(&dt);
+	ts = ds1307.getTimestamp();
+
+	date_str = String((uint16_t) dt.year + 2000) + "-" + String(dt.month) + "-"
+				+ String(dt.day) + "_" + String(dt.hour) + ":" + String(dt.minute)
+				+ ":" + String(dt.second);
+
+	ev_cnt = ec.get_evcnt();
+
+	if (ev_cnt < 0) {
+		ec.init();
+		ev_cnt = 0;
+	}
+
+	if (p_data->lb0 || p_data->lb1) {
+		++ev_cnt;
+		ec.set_evcnt(ev_cnt);
+	}
+
 	d_out = new BumbleBeeCntData;
 
-	Ds1307::DateTime dt;
-	DEBUG_MSG("Weight meas...")
-
-#ifdef SERIAL_DEBUG
-	Serial.print("GPIOAB: 0b");
-	Serial.println(p_data->mcp_gpioab, BIN);
-#endif
-	ds1307.getDateTime(&dt);
-
-	date = String((uint16_t) dt.year + 2000) + "-" + String(dt.month) + "-"
-			+ String(dt.day) + "_" + String(dt.hour) + ":" + String(dt.minute)
-			+ ":" + String(dt.second);
-	date += ",";
-	date += p_data->lb0;
-	date += ",";
-	date += p_data->lb1;
-	date += ",";
-	date += p_data->humidity;
-	date += ",";
-	date += p_data->temperature;
-	date += ",";
-	date += p_data->pressure;
-	date += ",";
-	date += p_data->weight;
+	log_str = date_str;
+	log_str += ",";
+	log_str += p_data->lb0;
+	log_str += ",";
+	log_str += p_data->lb1;
+	log_str += ",";
+	log_str += p_data->humidity;
+	log_str += ",";
+	log_str += p_data->temperature;
+	log_str += ",";
+	log_str += p_data->pressure;
+	log_str += ",";
+	log_str += p_data->weight;
+	log_str += ",";
+	log_str += p_data->v_batt;
+	log_str += ",";
+	log_str += ev_cnt;
+	log_str += ",";
+	log_str += ts;
 
 	*d_out = *p_data;
-	d_out->info = date;
+	d_out->info = log_str;
 
 #ifdef SERIAL_DEBUG
-	Serial.println(date);
+	Serial.println(log_str);
 #endif
 
 	if (p_data->wlan_en) {

@@ -14,18 +14,33 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+const uint8_t Ds1307::daysInMonth [] PROGMEM = { 31,28,31,30,31,30,31,31,30,31,30,31 };
 
 Ds1307::Ds1307(uint8_t i2c_address)
 {
     _i2c_address = i2c_address;
 }
 
-
 void Ds1307::init()
 {
     Wire.begin();
 }
 
+// number of days since 2000/01/01, valid for 2001..2099
+uint16_t Ds1307::date2days(uint16_t y, uint8_t m, uint8_t d) {
+    if (y >= 2000)
+        y -= 2000;
+    uint16_t days = d;
+    for (uint8_t i = 1; i < m; ++i)
+        days += pgm_read_byte(daysInMonth + i - 1);
+    if (m > 2 && y % 4 == 0)
+        ++days;
+    return days + 365 * y + (y + 3) / 4 - 1;
+}
+
+long Ds1307::time2long(uint16_t days, uint8_t h, uint8_t m, uint8_t s) {
+    return ((days * 24L + h) * 60 + m) * 60 + s;
+}
 
 bool Ds1307::isHalted()
 {
@@ -103,6 +118,16 @@ uint8_t Ds1307::_dec2bcd(uint8_t dec)
     return ((dec / 10 * 16) + (dec % 10));
 }
 
+long Ds1307::getTimestamp() {
+	DateTime dt;
+	uint16_t days;
+	long ts;
+
+	getDateTime(&dt);
+	days = date2days(dt.year, dt.month, dt.day);
+	ts = time2long(days, dt.hour, dt.minute, dt.second);
+	return ts;
+}
 
 uint8_t Ds1307::_bcd2dec(uint8_t bcd)
 {
