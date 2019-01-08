@@ -376,8 +376,8 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	ts = ds1307.getTimestamp();
 
 	date_str = String((uint16_t) dt.year + 2000) + "-" + String(dt.month) + "-"
-				+ String(dt.day) + "_" + String(dt.hour) + ":" + String(dt.minute)
-				+ ":" + String(dt.second);
+			+ String(dt.day) + "_" + String(dt.hour) + ":" + String(dt.minute)
+			+ ":" + String(dt.second);
 
 	ev_cnt = evc.get_cnt();
 
@@ -481,10 +481,36 @@ void BumbleBeeCnt::st_goto_sleep() {
 }
 
 void BumbleBeeCnt::st_error(BumbleBeeCntData *d) {
+	int err_cnt = 0;
+	BumbleBeeCntData *d_st;
+
 #ifdef SERIAL_DEBUG
 	Serial.print("ERROR --- ");
 	Serial.println(d->info);
 #endif
-	delay(10);
-	ESP.deepSleep(10e6);
+
+	err_cnt = errc.get_cnt();
+	if (err_cnt > 5) {
+		d_st = new BumbleBeeCntData;
+		d_st->info = d->info;
+		InternalEvent(ST_FATAL_ERROR, d_st);
+	} else {
+		delay(10);
+		errc.inc();
+		ESP.deepSleep(5e6);
+	}
+}
+
+void BumbleBeeCnt::st_fatal_error(BumbleBeeCntData *d) {
+	File errorfile;
+	long ts;
+	ts = ds1307.getTimestamp();
+
+	errorfile = SD.open(error_file_name, FILE_WRITE);
+	if(errorfile){
+		errorfile.println("FATAL ERROR - " + d->info + "," + String(ts));
+	}
+	while(1){
+		yield();
+	}
 }
