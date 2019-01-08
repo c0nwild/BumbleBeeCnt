@@ -497,6 +497,8 @@ void BumbleBeeCnt::st_error(BumbleBeeCntData *d) {
 	} else {
 		delay(10);
 		errc.inc();
+		i2c_reg |= sysdefs::res_ctrl::allowreset;
+		attiny88.sendData(i2c_reg);
 		ESP.deepSleep(5e6);
 	}
 }
