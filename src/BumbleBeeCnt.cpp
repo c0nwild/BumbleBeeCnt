@@ -484,6 +484,6 @@ void BumbleBeeCnt::st_error(BumbleBeeCntData *d) {
 	Serial.print("ERROR --- ");
 	Serial.println(d->info);
 #endif
-	while (1)
-		;
+	delay(10);
+	ESP.deepSleep(10e6);
 }
