@@ -225,7 +225,14 @@ void AccessPoint::handleClient() {
 		sendHTMLcontent(client, web_content.output());
 
 	} else if (sPath == "/wipe_log_file") {
-		SD.remove(sysdefs::general::log_filename);
+		String ret_str;
+		boolean rv;
+
+		rv = SD.remove(sysdefs::general::log_filename);
+
+		ret_str = (rv) ? "Done" : "Error";
+
+		sendHTMLcontent(client,ret_str);
 
 	} else if (sPath != "/") {
 		File logFile = SD.open(sPath);
