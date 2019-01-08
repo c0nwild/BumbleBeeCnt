@@ -35,6 +35,9 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 
 	DEBUG_MSG_ARG(DEBUG_ID_MCP23017, HEX)
 
+	evc.init();
+	errc.init();
+
 	return retval;
 }
 
