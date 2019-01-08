@@ -38,6 +38,7 @@ const String passphrase = "thereisnospoon";
 
 namespace general {
 const String log_filename = "data.txt";
+const String error_filename = "error.txt";
 }//general
 
 namespace rtc {

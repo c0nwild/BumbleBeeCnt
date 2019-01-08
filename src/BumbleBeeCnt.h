@@ -56,6 +56,7 @@ private:
 	void st_prepare_sleep();
 	void st_goto_sleep();
 	void st_error(BumbleBeeCntData *d);
+	void st_fatal_error(BumbleBeeCntData *d);
 
 	float weight_meas();
 	void do_tare();
@@ -69,6 +70,7 @@ private:
 	BumbleBeeCntData ev_data;
 
 	String data_file_name = sysdefs::general::log_filename;
+	String error_file_name = sysdefs::general::error_filename;
 
 	uint8_t i2c_reg;
 
@@ -87,6 +89,7 @@ private:
 	STATE_MAP_ENTRY(&BumbleBeeCnt::st_prepare_sleep)
 	STATE_MAP_ENTRY(&BumbleBeeCnt::st_goto_sleep)
 	STATE_MAP_ENTRY(&BumbleBeeCnt::st_error)
+	STATE_MAP_ENTRY(&BumbleBeeCnt::st_fatal_error)
 	END_STATE_MAP
 
 		enum states {
@@ -102,6 +105,7 @@ private:
 			ST_PREPARE_SLEEP,
 			ST_GOTO_SLEEP,
 			ST_ERROR,
+			ST_FATAL_ERROR,
 			ST_MAX_STATES
 		};
 
