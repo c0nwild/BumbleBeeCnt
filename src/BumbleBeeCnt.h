@@ -32,11 +32,14 @@
 #include <types.h>
 #include "system_definitions.h"
 #include <EventCounter.h>
+#include <ErrCounter.h>
 
 class BumbleBeeCnt: public StateMachine {
 public:
 	BumbleBeeCnt() :
-			StateMachine(ST_MAX_STATES) {
+			StateMachine(ST_MAX_STATES),
+			evc(sysdefs::rtc::rtc_eventcnt),
+			errc(sysdefs::rtc::rtc_errmem){
 	}
 	void trigger();
 private:
@@ -122,7 +125,10 @@ private:
 		AccessPoint ap;
 
 		//RTC ram based event counter
-		rtc::EventCounter ec;
+		rtc::EventCounter evc;
+
+		//RTC ram based error counter
+		rtc::ErrCounter errc;
 
 	}; /* class BUmbleBeeCnt */
 

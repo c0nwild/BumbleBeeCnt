@@ -45,6 +45,8 @@ const uint8_t rtc_memstart = 65;
 const uint8_t rtc_memsize = 127;
 const uint8_t rtc_sreg = (rtc_memstart + 0); //2x uint32 needs 8 bytes
 const uint8_t rtc_eventcnt = (rtc_memstart + 8); //2x unsinged int (32bit) needs 8 bytes
+const uint8_t rtc_errmem = (rtc_eventcnt + 8); //2x unsinged int (32bit) needs 8 bytes
+const uint8_t rtc_errcnt = (rtc_errmem + 8);
 }//rtc
 }//sysdefs
 

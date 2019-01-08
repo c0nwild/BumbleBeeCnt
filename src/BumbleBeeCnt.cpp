@@ -376,16 +376,14 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 				+ String(dt.day) + "_" + String(dt.hour) + ":" + String(dt.minute)
 				+ ":" + String(dt.second);
 
-	ev_cnt = ec.get_evcnt();
+	ev_cnt = evc.get_cnt();
 
 	if (ev_cnt < 0) {
-		ec.init();
-		ev_cnt = 0;
+		evc.init();
 	}
 
 	if (p_data->lb0 || p_data->lb1) {
-		++ev_cnt;
-		ec.set_evcnt(ev_cnt);
+		evc.inc();
 	}
 
 	d_out = new BumbleBeeCntData;
