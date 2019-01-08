@@ -36,7 +36,6 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 	DEBUG_MSG_ARG(DEBUG_ID_MCP23017, HEX)
 
 	evc.init();
-	errc.init();
 
 	return retval;
 }
@@ -50,7 +49,8 @@ int BumbleBeeCnt::init_peripheral_system() {
 	if (bme.begin()) {
 		DEBUG_MSG_ARG(DEBUG_ID_BME280, HEX)
 	} else {
-		retval = -DEBUG_ID_BME280;
+		DEBUG_MSG("F" + String(DEBUG_ID_BME280))
+		retval += -DEBUG_ID_BME280;
 	}
 
 	EEPROM.begin(128);
@@ -65,7 +65,8 @@ int BumbleBeeCnt::init_peripheral_system() {
 	if (SD.begin(chipSelectSD)) {
 		DEBUG_MSG_ARG(DEBUG_ID_SD, HEX)
 	} else {
-		retval = -DEBUG_ID_SD;
+		DEBUG_MSG("F" + String(DEBUG_ID_SD))
+		retval += -DEBUG_ID_SD;
 	}
 
 	return retval;
@@ -444,6 +445,7 @@ void BumbleBeeCnt::st_tare() {
 void BumbleBeeCnt::st_write_to_sd(BumbleBeeCntData* d) {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_WRITE_TO_SD, HEX)
 	File datafile;
+	attiny88.sendData(i2c_reg);
 	String logstring;
 
 	datafile = SD.open(data_file_name, FILE_WRITE);
@@ -481,7 +483,8 @@ void BumbleBeeCnt::st_goto_sleep() {
 }
 
 void BumbleBeeCnt::st_error(BumbleBeeCntData *d) {
-	int err_cnt = 0;
+	static int err_cnt = 0;
+	states next_state = ST_ERROR;
 	BumbleBeeCntData *d_st;
 
 #ifdef SERIAL_DEBUG
@@ -489,18 +492,18 @@ void BumbleBeeCnt::st_error(BumbleBeeCntData *d) {
 	Serial.println(d->info);
 #endif
 
-	err_cnt = errc.get_cnt();
+	++err_cnt;
+	DEBUG_MSG("err_cnt: " + String(err_cnt));
 	if (err_cnt > 5) {
 		d_st = new BumbleBeeCntData;
 		d_st->info = d->info;
-		InternalEvent(ST_FATAL_ERROR, d_st);
+		next_state = ST_FATAL_ERROR;
 	} else {
-		delay(10);
-		errc.inc();
-		i2c_reg |= sysdefs::res_ctrl::allowreset;
-		attiny88.sendData(i2c_reg);
-		ESP.deepSleep(5e6);
+		delay(5000);
+		next_state = ST_WAKEUP;
+		d_st = NULL;
 	}
+	InternalEvent(next_state, d_st);
 }
 
 void BumbleBeeCnt::st_fatal_error(BumbleBeeCntData *d) {
@@ -509,10 +512,10 @@ void BumbleBeeCnt::st_fatal_error(BumbleBeeCntData *d) {
 	ts = ds1307.getTimestamp();
 
 	errorfile = SD.open(error_file_name, FILE_WRITE);
-	if(errorfile){
-		errorfile.println("FATAL ERROR - " + d->info + "," + String(ts));
-	}
-	while(1){
+	errorfile.println("FATAL ERROR - " + d->info + "," + String(ts));
+	errorfile.close();
+
+	while (1) {
 		yield();
 	}
 }
