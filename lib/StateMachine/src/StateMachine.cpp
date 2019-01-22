@@ -36,6 +36,14 @@ void StateMachine::InternalEvent(unsigned char newState, EventData* pData) {
 	currentState = newState;
 }
 
+void StateMachine::setCycleTime(unsigned long ct) {
+	cycleTime = ct;
+}
+
+unsigned long StateMachine::getCycleTime() {
+	return cycleTime;
+}
+
 // the state engine executes the state machine states
 void StateMachine::StateEngine(void) {
 	EventData* pDataTemp = NULL;

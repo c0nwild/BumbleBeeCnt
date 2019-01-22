@@ -23,10 +23,13 @@ protected:
     void ExternalEvent(unsigned char, EventData* = NULL);
     void InternalEvent(unsigned char, EventData* = NULL);
     virtual const StateStruct* GetStateMap() = 0;
+    void setCycleTime(unsigned long ct);
+    unsigned long getCycleTime();
 private:
     const int _maxStates;
     bool _eventGenerated;
     EventData* _pEventData;
+    unsigned long cycleTime;
     void StateEngine(void);
 };
 
