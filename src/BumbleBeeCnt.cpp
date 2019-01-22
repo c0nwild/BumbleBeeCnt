@@ -10,7 +10,9 @@
 
 void BumbleBeeCnt::trigger() {
 	ExternalEvent(ST_WAKEUP);
+#ifdef SM_CYCLETIME_MEAS
 	this->setCycleTime(millis());
+#endif
 }
 
 int BumbleBeeCnt::init_peripheral_system_once() {
@@ -480,9 +482,11 @@ void BumbleBeeCnt::st_prepare_sleep() {
 
 void BumbleBeeCnt::st_goto_sleep() {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_GOTO_SLEEP, HEX)
+#ifdef SM_CYCLETIME_MEAS
 	unsigned long cycleTime;
 	cycleTime = millis() - this->getCycleTime();
 	DEBUG_MSG("cycle: " + String(cycleTime));
+#endif
 	ESP.deepSleep(600e6);
 }
 

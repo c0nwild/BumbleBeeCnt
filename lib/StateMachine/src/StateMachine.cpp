@@ -36,6 +36,7 @@ void StateMachine::InternalEvent(unsigned char newState, EventData* pData) {
 	currentState = newState;
 }
 
+#ifdef SM_CYCLETIME_MEAS
 void StateMachine::setCycleTime(unsigned long ct) {
 	cycleTime = ct;
 }
@@ -43,6 +44,7 @@ void StateMachine::setCycleTime(unsigned long ct) {
 unsigned long StateMachine::getCycleTime() {
 	return cycleTime;
 }
+#endif
 
 // the state engine executes the state machine states
 void StateMachine::StateEngine(void) {

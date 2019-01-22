@@ -70,7 +70,7 @@ private:
 	String data_file_name = sysdefs::general::log_filename;
 	String error_file_name = sysdefs::general::error_filename;
 
-	uint8_t i2c_reg;
+	uint8_t i2c_reg = 0;
 
 	const unsigned chipSelectSD = D8; //D8
 

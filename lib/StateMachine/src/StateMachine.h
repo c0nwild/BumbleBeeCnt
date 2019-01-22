@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include "EventData.h"
 
+#define SM_CYCLETIME_MEAS
+
 struct StateStruct;
 
 class StateMachine {
@@ -23,13 +25,17 @@ protected:
     void ExternalEvent(unsigned char, EventData* = NULL);
     void InternalEvent(unsigned char, EventData* = NULL);
     virtual const StateStruct* GetStateMap() = 0;
+#ifdef SM_CYCLETIME_MEAS
     void setCycleTime(unsigned long ct);
     unsigned long getCycleTime();
+#endif
 private:
     const int _maxStates;
     bool _eventGenerated;
     EventData* _pEventData;
+#ifdef SM_CYCLETIME_MEAS
     unsigned long cycleTime;
+#endif
     void StateEngine(void);
 };
 
