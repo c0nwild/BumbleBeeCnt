@@ -54,6 +54,7 @@ namespace debug {
 const String bme280 = "bme280";
 const String sd = "sd";
 const String mcp = "mcp 23017";
+const String hx711 = "hx711";
 
 }
 #endif

@@ -36,8 +36,8 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 		mcp.setupInterruptPin(n, CHANGE);
 	mcp.setupInterrupts(true, true, LOW);
 
-	DEBUG_MSG_ARG(DEBUG_ID_MCP23017, HEX)
-	DEBUG_MSG_PASS(sysdefs::debug::mcp);
+DEBUG_MSG_ARG(DEBUG_ID_MCP23017, HEX)
+			DEBUG_MSG_PASS(sysdefs::debug::mcp);
 
 	evc.init();
 
@@ -51,8 +51,8 @@ int BumbleBeeCnt::init_peripheral_system() {
 	Wire.begin();
 
 	if (bme.begin()) {
-		DEBUG_MSG_ARG(DEBUG_ID_BME280, HEX)
-		DEBUG_MSG_PASS(sysdefs::debug::bme280)
+DEBUG_MSG_ARG(DEBUG_ID_BME280, HEX)
+						DEBUG_MSG_PASS(sysdefs::debug::bme280)
 	} else {
 		DEBUG_MSG_FAIL(sysdefs::debug::bme280)
 		retval += -DEBUG_ID_BME280;
@@ -142,7 +142,12 @@ float BumbleBeeCnt::weight_meas() {
 	rv = scale.getData();
 
 	scale.powerDown();
-	DEBUG_MSG("Weight is: " + String(rv));
+	if (isnan(rv)) {
+		DEBUG_MSG_FAIL(sysdefs::debug::hx711)
+	} else {
+		DEBUG_MSG("Weight is: " + String(rv));
+	}
+
 	return rv;
 }
 
@@ -181,11 +186,11 @@ void BumbleBeeCnt::st_wakeup() {
 #ifdef SERIAL_DEBUG_INT_CNTR
 	String src;
 	if (i2c_reg & sysdefs::res_ctrl::int_src_esp)
-		src = "ESP";
+	src = "ESP";
 	else if (i2c_reg & sysdefs::res_ctrl::int_src_mcp)
-		src = "MCP";
+	src = "MCP";
 	else
-		src = "undef";
+	src = "undef";
 
 	Serial.print("i2cbuf: ");
 	Serial.println(attiny88.dumpBuffer(), BIN);
