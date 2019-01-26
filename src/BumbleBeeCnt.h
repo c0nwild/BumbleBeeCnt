@@ -9,6 +9,8 @@
 #define SRC_BUMBLEBEECNT_H_
 
 #define SERIAL_DEBUG
+// #define SERIAL_DEBUG_STATES
+// #define SERIAL_DEBUG_INT_CNTR
 
 #define MCP_GPIOA 0u
 #define MCP_GPIOB 1u

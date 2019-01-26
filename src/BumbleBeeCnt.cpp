@@ -25,7 +25,7 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 		mcp.pinMode(n, OUTPUT);
 	}
 	mcp.pinMode(7, INPUT);
-	mcp.pullUp(7, HIGH);
+	//mcp.pullUp(7, HIGH);
 	mcp.pinMode(6, INPUT);
 	mcp.pullUp(6, HIGH);
 	mcp.pinMode(5, INPUT);
@@ -37,6 +37,7 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 	mcp.setupInterrupts(true, true, LOW);
 
 	DEBUG_MSG_ARG(DEBUG_ID_MCP23017, HEX)
+	DEBUG_MSG_PASS(sysdefs::debug::mcp);
 
 	evc.init();
 
@@ -51,8 +52,9 @@ int BumbleBeeCnt::init_peripheral_system() {
 
 	if (bme.begin()) {
 		DEBUG_MSG_ARG(DEBUG_ID_BME280, HEX)
+		DEBUG_MSG_PASS(sysdefs::debug::bme280)
 	} else {
-		DEBUG_MSG("F" + String(DEBUG_ID_BME280))
+		DEBUG_MSG_FAIL(sysdefs::debug::bme280)
 		retval += -DEBUG_ID_BME280;
 	}
 
@@ -66,9 +68,9 @@ int BumbleBeeCnt::init_peripheral_system() {
 
 	pinMode(chipSelectSD, OUTPUT);
 	if (SD.begin(chipSelectSD)) {
-		DEBUG_MSG_ARG(DEBUG_ID_SD, HEX)
+		DEBUG_MSG_PASS(sysdefs::debug::sd)
 	} else {
-		DEBUG_MSG("F" + String(DEBUG_ID_SD))
+		DEBUG_MSG_FAIL(sysdefs::debug::sd)
 		retval += -DEBUG_ID_SD;
 	}
 
@@ -176,7 +178,7 @@ void BumbleBeeCnt::st_wakeup() {
 		d = new BumbleBeeCntData;
 		d->info = "invalid data from int ctrl";
 	}
-#ifdef SERIAL_DEBUG
+#ifdef SERIAL_DEBUG_INT_CNTR
 	String src;
 	if (i2c_reg & sysdefs::res_ctrl::int_src_esp)
 		src = "ESP";
@@ -470,7 +472,7 @@ void BumbleBeeCnt::st_prepare_sleep() {
 //	Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
 //	Wire.write(i2c_reg);
 //	Wire.endTransmission(true);
-#ifdef SERIAL_DEBUG
+#ifdef SERIAL_DEBUG_INT_CNTR
 	Serial.print("I2CREG: 0x");
 	Serial.print(i2c_reg, BIN);
 	Serial.println();

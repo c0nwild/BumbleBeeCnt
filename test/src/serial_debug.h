@@ -10,13 +10,23 @@
 
 #ifdef SERIAL_DEBUG
 #define DEBUG_MSG(x) \
-		Serial.println(x);
-#define DEBUG_MSG_ARG(x,t) \
-		Serial.println(x, t);
-#else
+			Serial.println(x);
+#define DEBUG_MSG_PASS(x) \
+			Serial.println(x + "... OK");
+#define DEBUG_MSG_FAIL(x) \
+			Serial.println(x + "... FAIL");
+	#ifdef SERIAL_DEBUG_STATES
+	#define DEBUG_MSG_ARG(x,t) \
+			Serial.println(x, t);
+	#else //SERIAL_DEBUG_STATES
+	#define DEBUG_MSG_ARG(x,t)
+	#endif //SERIAL_DEBUG_STATES
+#else //SERIAL_DEBUG
 #define DEBUG_MSG(x)
 #define DEBUG_MSG_ARG(x,t)
-#endif
+#define DEBUG_MSG_PASS(x)
+#define DEBUB_MSG_FAIL(x)
+#endif //SERIAL_DEBUG
 
 //Debug ID´s for peripheral hardware
 #define DEBUG_ID_BME280 (0x1)
