@@ -217,7 +217,7 @@ void BumbleBeeCnt::st_init_peripherals() {
 
 	int retval = 0;
 	states next_state = ST_INIT_PERIPHERALS;
-	BumbleBeeCntData *data;
+	BumbleBeeCntData *data = NULL;
 
 	if (!(i2c_reg & sysdefs::res_ctrl::sys_initialized)) {
 		(void) init_peripheral_system_once();
@@ -230,7 +230,7 @@ void BumbleBeeCnt::st_init_peripherals() {
 		data = new BumbleBeeCntData;
 		data->info = "init_peripherals failed with code " + String(retval);
 	} else {
-		next_state = ST_EVAL_PERIPHERAL_DATA;
+		next_state = ST_READ_PERIPHERALS;
 		data = NULL;
 
 		i2c_reg |= sysdefs::res_ctrl::sys_initialized;
