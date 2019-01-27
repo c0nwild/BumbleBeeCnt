@@ -39,25 +39,26 @@ const String passphrase = "thereisnospoon";
 namespace general {
 const String log_filename = "data.txt";
 const String error_filename = "error.txt";
+const unsigned log_sensor_interval = 600; // in sec.
+const unsigned event_sum_interval = 60; // in sec.
 }//general
 
 namespace rtc {
 const uint8_t rtc_memstart = 65;
 const uint8_t rtc_memsize = 127;
 const uint8_t rtc_sreg = (rtc_memstart + 0); //2x uint32 needs 8 bytes
-const uint8_t rtc_eventcnt = (rtc_memstart + 8); //2x unsinged int (32bit) needs 8 bytes
-const uint8_t rtc_errmem = (rtc_memstart + 16); //2x unsinged int (32bit) needs 8 bytes
+const uint8_t rtc_eventcnt0 = (rtc_memstart + 8); //2x unsinged int (32bit) needs 8 bytes
+const uint8_t rtc_eventcnt1 = (rtc_memstart +16); //2x unsinged int (32bit) needs 8 bytes
+const uint8_t rtc_errmem = (rtc_memstart + 24); //2x unsinged int (32bit) needs 8 bytes
+const uint8_t rtc_bmbcnt_data = (rtc_memstart + 32);
 }//rtc
 
-#ifdef SERIAL_DEBUG
 namespace debug {
 const String bme280 = "bme280";
 const String sd = "sd";
 const String mcp = "mcp 23017";
 const String hx711 = "hx711";
-
 }
-#endif
 }//sysdefs
 
 

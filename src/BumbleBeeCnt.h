@@ -32,14 +32,17 @@
 #include <AccessPoint.h>
 #include <EEPROM.h>
 #include <types.h>
-#include "system_definitions.h"
+#include <system_definitions.h>
 #include <EventCounter.h>
+#include <RTCDataBuffer.h>
 
 class BumbleBeeCnt: public StateMachine {
 public:
 	BumbleBeeCnt() :
 			StateMachine(ST_MAX_STATES),
-			evc(sysdefs::rtc::rtc_eventcnt){
+			evc0(sysdefs::rtc::rtc_eventcnt0),
+			evc1(sysdefs::rtc::rtc_eventcnt1),
+			rtc_buf(sysdefs::rtc::rtc_bmbcnt_data){
 	}
 	void trigger();
 private:
@@ -66,8 +69,11 @@ private:
 	void read_sensors(BumbleBeeCntData *s_data);
 	void read_port_expander(BumbleBeeCntData *p_data);
 	void eval_peripheral_event(uint8_t mcp_gpioa);
+	unsigned calculate_zero_intervals(long ts_prev, long ts_curr);
 
-	BumbleBeeCntData ev_data;
+//	BumbleBeeCntData ev_data;
+	long current_ts = 0;
+	long last_ts = 0;
 
 	String data_file_name = sysdefs::general::log_filename;
 	String error_file_name = sysdefs::general::error_filename;
@@ -128,8 +134,11 @@ private:
 		//WebServer
 		AccessPoint ap;
 
-		//RTC ram based event counter
-		rtc::EventCounter evc;
+		//RTC ram based event counter, one for each channel
+		rtc::EventCounter evc0, evc1;
+
+		//RTC ram based data buffer
+		rtc::RTCDataBuffer rtc_buf;
 
 	}; /* class BUmbleBeeCnt */
 

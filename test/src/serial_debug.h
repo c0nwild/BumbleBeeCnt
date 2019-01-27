@@ -17,7 +17,7 @@
 			Serial.println(x + "... FAIL");
 	#ifdef SERIAL_DEBUG_STATES
 	#define DEBUG_MSG_ARG(x,t) \
-			Serial.println(x, t);
+				Serial.println(x, t);
 	#else //SERIAL_DEBUG_STATES
 	#define DEBUG_MSG_ARG(x,t)
 	#endif //SERIAL_DEBUG_STATES
