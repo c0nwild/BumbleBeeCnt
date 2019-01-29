@@ -18,6 +18,7 @@ public:
 	RTCDataBuffer(uint8_t mem_loc);
 	virtual ~RTCDataBuffer();
 
+	void init();
 	void setBuffer (BumbleBeeRamData *data);
 	BumbleBeeRamData getBuffer();
 private:

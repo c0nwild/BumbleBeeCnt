@@ -20,11 +20,22 @@ RTCDataBuffer::~RTCDataBuffer() {
 }
 
 void RTCDataBuffer::setBuffer(BumbleBeeRamData* data) {
+	if (sizeof(*data) > sysdefs::rtc::rtc_memsize) {
+		return;
+	}
 	system_rtc_mem_write(mem_location, data, sizeof(*data));
 }
 
+void RTCDataBuffer::init() {
+	BumbleBeeRamData data;
+	system_rtc_mem_write(mem_location, &data, sizeof(data));
+}
+
 BumbleBeeRamData RTCDataBuffer::getBuffer() {
-	BumbleBeeRamData rv = { };
+	BumbleBeeRamData rv;
+	if (sizeof(rv) > sysdefs::rtc::rtc_memsize) {
+		return rv;
+	}
 	system_rtc_mem_read(mem_location, &rv, sizeof(rv));
 	return rv;
 }

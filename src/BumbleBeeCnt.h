@@ -9,8 +9,8 @@
 #define SRC_BUMBLEBEECNT_H_
 
 #define SERIAL_DEBUG
-// #define SERIAL_DEBUG_STATES
-// #define SERIAL_DEBUG_INT_CNTR
+//#define SERIAL_DEBUG_STATES
+//#define SERIAL_DEBUG_INT_CNTR
 
 #define MCP_GPIOA 0u
 #define MCP_GPIOB 1u
@@ -42,7 +42,7 @@ public:
 			StateMachine(ST_MAX_STATES),
 			evc0(sysdefs::rtc::rtc_eventcnt0),
 			evc1(sysdefs::rtc::rtc_eventcnt1),
-			rtc_buf(sysdefs::rtc::rtc_bmbcnt_data){
+			rtc_buf(sysdefs::rtc::rtc_bmbcnt_data) {
 	}
 	void trigger();
 private:
@@ -69,11 +69,8 @@ private:
 	void read_sensors(BumbleBeeCntData *s_data);
 	void read_port_expander(BumbleBeeCntData *p_data);
 	void eval_peripheral_event(uint8_t mcp_gpioa);
-	unsigned calculate_zero_intervals(long ts_prev, long ts_curr);
-
-//	BumbleBeeCntData ev_data;
-	long current_ts = 0;
-	long last_ts = 0;
+	String prepare_log_str(Ds1307::DateTime dt,
+			BumbleBeeCntData *d);
 
 	String data_file_name = sysdefs::general::log_filename;
 	String error_file_name = sysdefs::general::error_filename;
@@ -83,63 +80,67 @@ private:
 	const unsigned chipSelectSD = D8; //D8
 
 	BEGIN_STATE_MAP
-	STATE_MAP_ENTRY(&BumbleBeeCnt::st_wakeup)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::st_wifi_init)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::st_wifi)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::st_wifi_end)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::st_init_peripherals)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::st_read_peripherals)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::st_eval_peripheral_data)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::st_tare)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::st_write_to_sd)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::st_prepare_sleep)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::st_goto_sleep)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::st_error)
-	STATE_MAP_ENTRY(&BumbleBeeCnt::st_fatal_error)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_wakeup)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_wifi_init)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_wifi)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_wifi_end)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_init_peripherals)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_read_peripherals)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_eval_peripheral_data)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_tare)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_write_to_sd)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_prepare_sleep)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_goto_sleep)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_error)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_fatal_error)
 	END_STATE_MAP
 
-		enum states {
-			ST_WAKEUP = 0,
-			ST_WIFI_INIT,
-			ST_WIFI,
-			ST_WIFI_END,
-			ST_INIT_PERIPHERALS,
-			ST_READ_PERIPHERALS,
-			ST_EVAL_PERIPHERAL_DATA,
-			ST_TARE,
-			ST_WRITE_TO_SD,
-			ST_PREPARE_SLEEP,
-			ST_GOTO_SLEEP,
-			ST_ERROR,
-			ST_FATAL_ERROR,
-			ST_MAX_STATES
-		};
+	enum states {
+		ST_WAKEUP = 0,
+		ST_WIFI_INIT,
+		ST_WIFI,
+		ST_WIFI_END,
+		ST_INIT_PERIPHERALS,
+		ST_READ_PERIPHERALS,
+		ST_EVAL_PERIPHERAL_DATA,
+		ST_TARE,
+		ST_WRITE_TO_SD,
+		ST_PREPARE_SLEEP,
+		ST_GOTO_SLEEP,
+		ST_ERROR,
+		ST_FATAL_ERROR,
+		ST_MAX_STATES
+	};
 
-		//BME280
-		BME280I2C bme;
+	Ds1307::DateTime dt;
+	long ts = 0;
+	uint64_t reset_cntdown = 0; //Time until esp has to wake itself.
 
-		//  Portexpander
-		Adafruit_MCP23017 mcp;
+	//BME280
+	BME280I2C bme;
 
-		// Real Time Clock
-		Ds1307 ds1307;
+	//  Portexpander
+	Adafruit_MCP23017 mcp;
 
-		//Scale
-//		HX711_ADC scale;
-		HX711_ADC scale;
+	// Real Time Clock
+	Ds1307 ds1307;
 
-		//Interrupt controller
-		i2c::I2CCom attiny88;
+	//Scale
+	//		HX711_ADC scale;
+	HX711_ADC scale;
 
-		//WebServer
-		AccessPoint ap;
+	//Interrupt controller
+	i2c::I2CCom attiny88;
 
-		//RTC ram based event counter, one for each channel
-		rtc::EventCounter evc0, evc1;
+	//WebServer
+	AccessPoint ap;
 
-		//RTC ram based data buffer
-		rtc::RTCDataBuffer rtc_buf;
+	//RTC ram based event counter, one for each channel
+	rtc::EventCounter evc0, evc1;
 
-	}; /* class BUmbleBeeCnt */
+	//RTC ram based data buffer
+	rtc::RTCDataBuffer rtc_buf;
+
+}; /* class BUmbleBeeCnt */
 
 #endif /* SRC_BUMBLEBEECNT_H_ */
