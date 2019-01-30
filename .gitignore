@@ -1,4 +1,7 @@
 .pioenvs
 /Build_GTest_lib/
 .piolibdeps
-/.cproject
+.cproject
+.project
+.settings
+.DS_Store
