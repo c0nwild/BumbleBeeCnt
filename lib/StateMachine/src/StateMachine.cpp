@@ -10,7 +10,7 @@
 
 StateMachine::StateMachine(int maxStates) :
 		_maxStates(maxStates), currentState(0), _eventGenerated(false), _pEventData(
-		NULL) {
+		NULL),cycleTime(0) {
 }
 
 // generates an external event. called once per external event
