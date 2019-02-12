@@ -8,6 +8,9 @@
 #ifndef SRC_BUMBLEBEECNT_H_
 #define SRC_BUMBLEBEECNT_H_
 
+/* Here go the system component definitions */
+// #define LB1 // Second Lightbarrier present?
+
 #define SERIAL_DEBUG
 //#define SERIAL_DEBUG_STATES
 //#define SERIAL_DEBUG_INT_CNTR
@@ -41,7 +44,9 @@ public:
 	BumbleBeeCnt() :
 			StateMachine(ST_MAX_STATES),
 			evc0(sysdefs::rtc::rtc_eventcnt0),
+#ifdef LB1
 			evc1(sysdefs::rtc::rtc_eventcnt1),
+#endif
 			rtc_buf(sysdefs::rtc::rtc_bmbcnt_data) {
 	}
 	void trigger();
@@ -136,8 +141,10 @@ private:
 	AccessPoint ap;
 
 	//RTC ram based event counter, one for each channel
-	rtc::EventCounter evc0, evc1;
-
+	rtc::EventCounter evc0;
+#ifdef LB1
+	rtc::EventCounter evc1;
+#endif
 	//RTC ram based data buffer
 	rtc::RTCDataBuffer rtc_buf;
 

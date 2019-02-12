@@ -18,7 +18,9 @@ struct BumbleBeeCntData: public EventData {
 	float pressure = 0;
 	float weight = 0;
 	uint8_t lb0 = 0;
+#ifdef LB1
 	uint8_t lb1 = 0;
+#endif
 	uint8_t wlan_en = 0;
 	uint8_t tare = 0;
 	uint16_t mcp_gpioab = 0;
@@ -26,7 +28,9 @@ struct BumbleBeeCntData: public EventData {
 	bool new_data = false;
 	bool do_log_entry = false;
 	unsigned ev_cnt0;
+#ifdef LB1
 	unsigned ev_cnt1;
+#endif
 };
 
 struct BumbleBeeRamData {
@@ -35,7 +39,9 @@ struct BumbleBeeRamData {
 	float pressure = 0;
 	float weight = 0;
 	uint8_t lb0 = 0;
+#ifdef LB1
 	uint8_t lb1 = 0;
+#endif
 	uint16_t mcp_gpioab = 0;
 	int v_batt = 0;
 	long ts = 0;

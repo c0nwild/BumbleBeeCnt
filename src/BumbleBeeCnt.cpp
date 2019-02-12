@@ -40,7 +40,9 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 	DEBUG_MSG_PASS(sysdefs::debug::mcp);
 
 	evc0.init();
+#ifdef LB1
 	evc1.init();
+#endif
 	rtc_buf.init();
 
 	return retval;
@@ -178,9 +180,11 @@ String BumbleBeeCnt::prepare_log_str(Ds1307::DateTime dt, BumbleBeeCntData* d) {
 
 	log_str = date_str;
 	log_str += ",";
-	log_str += d->ev_cnt0 + 1;
+	log_str += d->ev_cnt0;
+#ifdef LB1
 	log_str += ",";
-	log_str += d->ev_cnt1 + 1;
+	log_str += d->ev_cnt1;
+#endif
 	log_str += ",";
 	log_str += d->humidity;
 	log_str += ",";
@@ -451,7 +455,9 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	ram_data = rtc_buf.getBuffer();
 
 	p_data->lb0 = (p_data->mcp_gpioab & sysdefs::mcp::lb0) ? 1 : 0;
+#ifdef LB1
 	p_data->lb1 = (p_data->mcp_gpioab & sysdefs::mcp::lb1) ? 1 : 0;
+#endif
 	p_data->wlan_en = (p_data->mcp_gpioab & sysdefs::mcp::wlan_en) ? 1 : 0;
 	p_data->tare = (p_data->mcp_gpioab & sysdefs::mcp::tare) ? 1 : 0;
 
@@ -474,10 +480,14 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 	//Edge detection on lightbarriers and counter
 	lb0_rising_edge = ((ram_data.lb0 == 0) && (p_data->lb0 == 1));
+#ifdef LB1
 	lb1_rising_edge = ((ram_data.lb1 == 0) && (p_data->lb1 == 1));
+#endif
 
 	ram_data.lb0 = p_data->lb0;
+#ifdef LB1
 	ram_data.lb1 = p_data->lb1;
+#endif
 
 	p_data->ev_cnt0 = evc0.get_cnt();
 	if (p_data->ev_cnt0 < 0) {
@@ -485,16 +495,18 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	}
 	if (lb0_rising_edge) {
 		evc0.inc();
+		++p_data->ev_cnt0;
 	}
-
+#ifdef LB1
 	p_data->ev_cnt1 = evc1.get_cnt();
 	if (p_data->ev_cnt1 < 0) {
 		evc1.init();
 	}
 	if (lb1_rising_edge) {
 		evc1.inc();
+		++p_data->ev_cnt1;
 	}
-
+#endif
 	rtc_buf.setBuffer(&ram_data);
 
 	if (p_data->wlan_en) {
@@ -511,7 +523,9 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 			d_out->info = log_str;
 
 			evc0.init();
+#ifdef LB1
 			evc1.init();
+#endif
 
 			next_state = ST_WRITE_TO_SD;
 		}
