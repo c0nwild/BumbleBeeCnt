@@ -450,7 +450,9 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	BumbleBeeRamData ram_data;
 
 	bool lb0_rising_edge = false;
+#ifdef LB1
 	bool lb1_rising_edge = false;
+#endif
 
 	ram_data = rtc_buf.getBuffer();
 
@@ -480,6 +482,8 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 	//Edge detection on lightbarriers and counter
 	lb0_rising_edge = ((ram_data.lb0 == 0) && (p_data->lb0 == 1));
+	DEBUG_MSG("lb0 ram: " + String(ram_data.lb0));
+	DEBUG_MSG("lb0: " + String(p_data->lb0));
 #ifdef LB1
 	lb1_rising_edge = ((ram_data.lb1 == 0) && (p_data->lb1 == 1));
 #endif
@@ -496,6 +500,7 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	if (lb0_rising_edge) {
 		evc0.inc();
 		++p_data->ev_cnt0;
+		DEBUG_MSG("ev_cnt0: " + String(p_data->ev_cnt0));
 	}
 #ifdef LB1
 	p_data->ev_cnt1 = evc1.get_cnt();
