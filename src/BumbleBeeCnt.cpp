@@ -180,7 +180,7 @@ String BumbleBeeCnt::prepare_log_str(Ds1307::DateTime dt, BumbleBeeCntData* d) {
 			+ String(dt.day) + "_" + String(dt.hour) + ":" + String(dt.minute)
 			+ ":" + String(dt.second);
 
-	switch(d->dir){
+	switch (d->dir) {
 	case sysdefs::general::dir_in:
 		direction = "in";
 		break;
@@ -196,7 +196,7 @@ String BumbleBeeCnt::prepare_log_str(Ds1307::DateTime dt, BumbleBeeCntData* d) {
 #ifndef DIR_SENSE
 	log_str += d->ev_cnt0;
 #else
-	log_str += direction ;
+	log_str += direction;
 #endif
 #ifdef LB1
 	log_str += ",";
@@ -610,8 +610,10 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 			ram_data.dir = sysdefs::general::dir_out;
 		}
 	}
-	p_data->dir = ram_data.dir;
 #endif
+
+	p_data->dir = ram_data.dir;
+
 	ram_data.lb0 = p_data->lb0;
 #ifdef LB1
 	ram_data.lb1 = p_data->lb1;
@@ -621,7 +623,26 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 		reset_cntdown = sysdefs::general::event_timeout;
 	}
 	//Event complete
-	if (ram_data.edge_lb0 && ram_data.edge_lb1) {
+	if ((ram_data.edge_lb0 && ram_data.edge_lb1)
+			|| (i2c_reg & sysdefs::res_ctrl::int_src_mcp)) {
+		p_data->ev_cnt0 = evc0.get_cnt();
+		if (p_data->ev_cnt0 < 0) {
+			evc0.init();
+		}
+		if (ram_data.dir == sysdefs::general::dir_in) {
+			evc0.inc();
+			++p_data->ev_cnt0;
+			DEBUG_MSG("ev_cnt0: " + String(p_data->ev_cnt0));
+		}
+		p_data->ev_cnt1 = evc1.get_cnt();
+		if (p_data->ev_cnt1 < 0) {
+			evc1.init();
+		}
+		if (ram_data.dir == sysdefs::general::dir_out) {
+			evc1.inc();
+			++p_data->ev_cnt1;
+			DEBUG_MSG("ev_cnt1: " + String(p_data->ev_cnt1));
+		}
 		event_pending = false;
 		ram_data.edge_lb0 = false;
 		ram_data.edge_lb1 = false;
