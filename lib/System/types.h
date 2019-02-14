@@ -21,6 +21,9 @@ struct BumbleBeeCntData: public EventData {
 #ifdef LB1
 	uint8_t lb1 = 0;
 #endif
+#ifdef DIR_SENSE
+	int8_t dir = 0;
+#endif
 	uint8_t wlan_en = 0;
 	uint8_t tare = 0;
 	uint16_t mcp_gpioab = 0;
@@ -42,10 +45,15 @@ struct BumbleBeeRamData {
 #ifdef LB1
 	uint8_t lb1 = 0;
 #endif
+#ifdef DIR_SENSE
+	uint8_t edge_lb0 = 0;
+	uint8_t edge_lb1 = 0;
+	int8_t dir = 0;
+#endif
 	uint16_t mcp_gpioab = 0;
 	int v_batt = 0;
 	long ts = 0;
 	uint16_t ts_diff = 0;
-};
+};//size 33 (mit lb1 und dir sense)
 
 #endif /* LIB_SYSTEM_TYPES_H_ */

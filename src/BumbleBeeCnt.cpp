@@ -168,19 +168,36 @@ void BumbleBeeCnt::read_port_expander(BumbleBeeCntData *p_data) {
 
 void BumbleBeeCnt::eval_peripheral_event(uint8_t mcp_gpioa) {
 // data processing here
+
 }
 
 String BumbleBeeCnt::prepare_log_str(Ds1307::DateTime dt, BumbleBeeCntData* d) {
 	String date_str = "";
 	String log_str = "";
+	String direction = "";
 
 	date_str = String((uint16_t) dt.year + 2000) + "-" + String(dt.month) + "-"
 			+ String(dt.day) + "_" + String(dt.hour) + ":" + String(dt.minute)
 			+ ":" + String(dt.second);
 
+	switch(d->dir){
+	case sysdefs::general::dir_in:
+		direction = "in";
+		break;
+	case sysdefs::general::dir_out:
+		direction = "out";
+		break;
+	default:
+		direction = "none";
+	}
+
 	log_str = date_str;
 	log_str += ",";
+#ifndef DIR_SENSE
 	log_str += d->ev_cnt0;
+#else
+	log_str += direction ;
+#endif
 #ifdef LB1
 	log_str += ",";
 	log_str += d->ev_cnt1;
@@ -395,12 +412,12 @@ void BumbleBeeCnt::st_read_peripherals() {
 	ds1307.getDateTime(&dt);
 	ts = ds1307.getTimestamp();
 
-	ts_diff = (uint16_t)(ts - last_ts);
+	ts_diff = (uint16_t) (ts - last_ts);
 
 	DEBUG_MSG("ts diff: " + String(ts_diff));
 	DEBUG_MSG("delta ts_diff: " + String(ts_diff - last_ts_diff));
 
-	if((ts_diff - last_ts_diff) >= sysdefs::general::event_sum_interval){
+	if ((ts_diff - last_ts_diff) >= sysdefs::general::event_sum_interval) {
 		data->do_log_entry = true;
 		ram_data.ts_diff = ts_diff;
 		rtc_buf.setBuffer(&ram_data);
@@ -410,6 +427,7 @@ void BumbleBeeCnt::st_read_peripherals() {
 		data->weight = weight_meas();
 		read_sensors(data);
 		data->new_data = true;
+		data->do_log_entry = true;
 		ram_data.ts = ts;
 		ram_data.ts_diff = 0;
 		ts_diff = 0;
@@ -425,7 +443,6 @@ void BumbleBeeCnt::st_read_peripherals() {
 
 	reset_cntdown = (sysdefs::general::log_sensor_interval - ts_diff);
 
-
 	if (data->mcp_gpioab & sysdefs::mcp::tare) {
 		next_state = ST_TARE;
 		data = NULL;
@@ -438,23 +455,120 @@ void BumbleBeeCnt::st_read_peripherals() {
  * prepares string for log entry.
  */
 
+//void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
+//	DEBUG_MSG_ARG(DEBUG_ID_ST_EVAL_PERIPHERAL_DATA, HEX);
+//
+//	states next_state = ST_PREPARE_SLEEP;
+//
+//	String log_str = "";
+//
+//	BumbleBeeCntData *d_out = NULL;
+//
+//	BumbleBeeRamData ram_data;
+//
+//	bool lb0_rising_edge = false;
+//#ifdef LB1
+//	bool lb1_rising_edge = false;
+//#endif
+//
+//	ram_data = rtc_buf.getBuffer();
+//
+//	p_data->lb0 = (p_data->mcp_gpioab & sysdefs::mcp::lb0) ? 1 : 0;
+//#ifdef LB1
+//	p_data->lb1 = (p_data->mcp_gpioab & sysdefs::mcp::lb1) ? 1 : 0;
+//#endif
+//	p_data->wlan_en = (p_data->mcp_gpioab & sysdefs::mcp::wlan_en) ? 1 : 0;
+//	p_data->tare = (p_data->mcp_gpioab & sysdefs::mcp::tare) ? 1 : 0;
+//
+//	/*If sensor data are not new, use those values stored in ram.
+//	 * Otherwise update ram values.
+//	 */
+//	if (!p_data->new_data) {
+//		p_data->humidity = ram_data.humidity;
+//		p_data->pressure = ram_data.pressure;
+//		p_data->temperature = ram_data.temperature;
+//		p_data->v_batt = ram_data.v_batt;
+//		p_data->weight = ram_data.weight;
+//	} else {
+//		ram_data.humidity = p_data->humidity;
+//		ram_data.pressure = p_data->pressure;
+//		ram_data.temperature = p_data->temperature;
+//		ram_data.v_batt = p_data->v_batt;
+//		ram_data.weight = p_data->weight;
+//	}
+//
+//	//Edge detection on lightbarriers and counter
+//	lb0_rising_edge = ((ram_data.lb0 == 0) && (p_data->lb0 == 1));
+//#ifdef LB1
+//	lb1_rising_edge = ((ram_data.lb1 == 0) && (p_data->lb1 == 1));
+//#endif
+//
+//	ram_data.lb0 = p_data->lb0;
+//#ifdef LB1
+//	ram_data.lb1 = p_data->lb1;
+//#endif
+//
+//	p_data->ev_cnt0 = evc0.get_cnt();
+//	if (p_data->ev_cnt0 < 0) {
+//		evc0.init();
+//	}
+//	if (lb0_rising_edge) {
+//		evc0.inc();
+//		++p_data->ev_cnt0;
+//		DEBUG_MSG("ev_cnt0: " + String(p_data->ev_cnt0));
+//	}
+//#ifdef LB1
+//	p_data->ev_cnt1 = evc1.get_cnt();
+//	if (p_data->ev_cnt1 < 0) {
+//		evc1.init();
+//	}
+//	if (lb1_rising_edge) {
+//		evc1.inc();
+//		++p_data->ev_cnt1;
+//	}
+//#endif
+//	rtc_buf.setBuffer(&ram_data);
+//
+//	if (p_data->wlan_en) {
+//		next_state = ST_WIFI_INIT;
+//	} else {
+//		if (p_data->do_log_entry) {
+//			d_out = new BumbleBeeCntData;
+//
+//			*d_out = *p_data;
+//			log_str = prepare_log_str(dt, p_data);
+//#ifdef SERIAL_DEBUG
+//	Serial.println(log_str);
+//#endif
+//			d_out->info = log_str;
+//
+//			evc0.init();
+//#ifdef LB1
+//			evc1.init();
+//#endif
+//
+//			next_state = ST_WRITE_TO_SD;
+//		}
+//	}
+//	InternalEvent(next_state, d_out);
+//}
 void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_EVAL_PERIPHERAL_DATA, HEX);
 
 	states next_state = ST_PREPARE_SLEEP;
-
 	String log_str = "";
-
 	BumbleBeeCntData *d_out = NULL;
-
 	BumbleBeeRamData ram_data;
-
 	bool lb0_rising_edge = false;
 #ifdef LB1
 	bool lb1_rising_edge = false;
 #endif
+	bool event_pending = false;
 
 	ram_data = rtc_buf.getBuffer();
+
+	//Edge occured during last run?
+	event_pending = ((ram_data.edge_lb0 == 1) || (ram_data.edge_lb1 == 1));
 
 	p_data->lb0 = (p_data->mcp_gpioab & sysdefs::mcp::lb0) ? 1 : 0;
 #ifdef LB1
@@ -482,37 +596,44 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 	//Edge detection on lightbarriers and counter
 	lb0_rising_edge = ((ram_data.lb0 == 0) && (p_data->lb0 == 1));
-	DEBUG_MSG("lb0 ram: " + String(ram_data.lb0));
-	DEBUG_MSG("lb0: " + String(p_data->lb0));
+	if (lb0_rising_edge) {
+		ram_data.edge_lb0 = true;
+		if (ram_data.dir == 0) {
+			ram_data.dir = sysdefs::general::dir_in;
+		}
+	}
 #ifdef LB1
 	lb1_rising_edge = ((ram_data.lb1 == 0) && (p_data->lb1 == 1));
+	if (lb1_rising_edge) {
+		ram_data.edge_lb1 = true;
+		if (ram_data.dir == 0) {
+			ram_data.dir = sysdefs::general::dir_out;
+		}
+	}
+	p_data->dir = ram_data.dir;
 #endif
-
 	ram_data.lb0 = p_data->lb0;
 #ifdef LB1
 	ram_data.lb1 = p_data->lb1;
 #endif
+	//If first edge, set timeout
+	if (ram_data.edge_lb0 ^ ram_data.edge_lb1) {
+		reset_cntdown = sysdefs::general::event_timeout;
+	}
+	//Event complete
+	if (ram_data.edge_lb0 && ram_data.edge_lb1) {
+		event_pending = false;
+		ram_data.edge_lb0 = false;
+		ram_data.edge_lb1 = false;
+		ram_data.dir = 0;
+	}
 
-	p_data->ev_cnt0 = evc0.get_cnt();
-	if (p_data->ev_cnt0 < 0) {
-		evc0.init();
-	}
-	if (lb0_rising_edge) {
-		evc0.inc();
-		++p_data->ev_cnt0;
-		DEBUG_MSG("ev_cnt0: " + String(p_data->ev_cnt0));
-	}
-#ifdef LB1
-	p_data->ev_cnt1 = evc1.get_cnt();
-	if (p_data->ev_cnt1 < 0) {
-		evc1.init();
-	}
-	if (lb1_rising_edge) {
-		evc1.inc();
-		++p_data->ev_cnt1;
-	}
-#endif
 	rtc_buf.setBuffer(&ram_data);
+
+	if (event_pending) {
+		//Timeout in case the second event does not occur
+		reset_cntdown = sysdefs::general::event_timeout;
+	}
 
 	if (p_data->wlan_en) {
 		next_state = ST_WIFI_INIT;
@@ -523,14 +644,9 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 			*d_out = *p_data;
 			log_str = prepare_log_str(dt, p_data);
 #ifdef SERIAL_DEBUG
-	Serial.println(log_str);
+			Serial.println(log_str);
 #endif
 			d_out->info = log_str;
-
-			evc0.init();
-#ifdef LB1
-			evc1.init();
-#endif
 
 			next_state = ST_WRITE_TO_SD;
 		}
@@ -598,7 +714,7 @@ void BumbleBeeCnt::st_goto_sleep() {
 	cycleTime = millis() - this->getCycleTime();
 	DEBUG_MSG("cycle: " + String(cycleTime));
 #endif
-	DEBUG_MSG("reset_cntdown: " + String((uint32_t)reset_cntdown));
+	DEBUG_MSG("reset_cntdown: " + String((uint32_t )reset_cntdown));
 	ESP.deepSleep(reset_cntdown * 1e6);
 }
 

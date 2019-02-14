@@ -9,7 +9,8 @@
 #define SRC_BUMBLEBEECNT_H_
 
 /* Here go the system component definitions */
-// #define LB1 // Second Lightbarrier present?
+#define LB1 // Second Lightbarrier present?
+#define DIR_SENSE // Direction sensing
 
 #define SERIAL_DEBUG
 //#define SERIAL_DEBUG_STATES
