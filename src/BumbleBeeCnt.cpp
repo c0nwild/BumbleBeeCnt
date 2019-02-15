@@ -436,11 +436,6 @@ void BumbleBeeCnt::st_read_peripherals() {
 
 	read_port_expander(data);
 
-	i2c_reg &=
-			~(sysdefs::res_ctrl::int_src_esp | sysdefs::res_ctrl::int_src_mcp);
-
-	attiny88.sendData(i2c_reg);
-
 	reset_cntdown = (sysdefs::general::log_sensor_interval - ts_diff);
 
 	if (data->mcp_gpioab & sysdefs::mcp::tare) {
@@ -559,16 +554,14 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	String log_str = "";
 	BumbleBeeCntData *d_out = NULL;
 	BumbleBeeRamData ram_data;
+	uint8_t cycle_counter = 1;
+	event_eval st_eval = idle;
 	bool lb0_rising_edge = false;
 #ifdef LB1
 	bool lb1_rising_edge = false;
 #endif
-	bool event_pending = false;
 
 	ram_data = rtc_buf.getBuffer();
-
-	//Edge occured during last run?
-	event_pending = ((ram_data.edge_lb0 == 1) || (ram_data.edge_lb1 == 1));
 
 	p_data->lb0 = (p_data->mcp_gpioab & sysdefs::mcp::lb0) ? 1 : 0;
 #ifdef LB1
@@ -596,65 +589,103 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 	//Edge detection on lightbarriers and counter
 	lb0_rising_edge = ((ram_data.lb0 == 0) && (p_data->lb0 == 1));
+	ram_data.lb0 = p_data->lb0;
 	if (lb0_rising_edge) {
-		ram_data.edge_lb0 = true;
-		if (ram_data.dir == 0) {
-			ram_data.dir = sysdefs::general::dir_in;
-		}
+		st_eval = new_edge_lb0;
 	}
 #ifdef LB1
 	lb1_rising_edge = ((ram_data.lb1 == 0) && (p_data->lb1 == 1));
+	ram_data.lb1 = p_data->lb1;
 	if (lb1_rising_edge) {
-		ram_data.edge_lb1 = true;
-		if (ram_data.dir == 0) {
-			ram_data.dir = sysdefs::general::dir_out;
-		}
+		st_eval = new_edge_lb1;
 	}
 #endif
+	if (i2c_reg & sysdefs::res_ctrl::int_src_mcp) {
+		st_eval = cleanup;
+		DEBUG_MSG("Event timeout");
+	}
+
+	//The main sub-statemachine for event evaluation.
+	while (--cycle_counter) {
+		switch (st_eval) {
+		case new_edge_lb0:
+			//Second edge on the same LB -> discard event
+			if (ram_data.edge_lb0 == true) {
+				++cycle_counter;
+				st_eval = cleanup;
+				break;
+			}
+			if (ram_data.dir == 0) {
+				ram_data.dir = sysdefs::general::dir_in;
+				ram_data.edge_lb0 = true;
+				reset_cntdown = sysdefs::general::event_timeout;
+			} else {
+				++cycle_counter;
+				st_eval = count_event_in;
+			}
+			break;
+		case new_edge_lb1:
+			//Second edge on the same LB -> discard event
+			if (ram_data.edge_lb1 == true) {
+				++cycle_counter;
+				st_eval = cleanup;
+				break;
+			}
+			if (ram_data.dir == 0) {
+				ram_data.dir = sysdefs::general::dir_out;
+				ram_data.edge_lb1 = true;
+				reset_cntdown = sysdefs::general::event_timeout;
+			} else {
+				++cycle_counter;
+				st_eval = count_event_out;
+			}
+			break;
+		case count_event_in:
+			p_data->ev_cnt0 = evc0.get_cnt();
+			if (p_data->ev_cnt0 < 0) {
+				evc0.init();
+			}
+			evc0.inc();
+			++p_data->ev_cnt0;
+			DEBUG_MSG("ev_cnt0: " + String(p_data->ev_cnt0))
+			;
+			st_eval = cleanup;
+			++cycle_counter;
+			break;
+		case count_event_out:
+			p_data->ev_cnt1 = evc1.get_cnt();
+			if (p_data->ev_cnt1 < 0) {
+				evc1.init();
+			}
+			evc1.inc();
+			++p_data->ev_cnt1;
+			DEBUG_MSG("ev_cnt1: " + String(p_data->ev_cnt1))
+			;
+			st_eval = cleanup;
+			++cycle_counter;
+			break;
+		case cleanup:
+			ram_data.edge_lb0 = false;
+			ram_data.edge_lb1 = false;
+			ram_data.dir = 0;
+			cycle_counter = 0;
+			break;
+		case idle:
+			break;
+		default:
+			DEBUG_MSG("Eval SM invalid state.");
+		}
+	}
 
 	p_data->dir = ram_data.dir;
 
-	ram_data.lb0 = p_data->lb0;
-#ifdef LB1
-	ram_data.lb1 = p_data->lb1;
-#endif
-	//If first edge, set timeout
-	if (ram_data.edge_lb0 ^ ram_data.edge_lb1) {
-		reset_cntdown = sysdefs::general::event_timeout;
-	}
-	//Event complete
-	if ((ram_data.edge_lb0 && ram_data.edge_lb1)
-			|| (i2c_reg & sysdefs::res_ctrl::int_src_mcp)) {
-		p_data->ev_cnt0 = evc0.get_cnt();
-		if (p_data->ev_cnt0 < 0) {
-			evc0.init();
-		}
-		if (ram_data.dir == sysdefs::general::dir_in) {
-			evc0.inc();
-			++p_data->ev_cnt0;
-			DEBUG_MSG("ev_cnt0: " + String(p_data->ev_cnt0));
-		}
-		p_data->ev_cnt1 = evc1.get_cnt();
-		if (p_data->ev_cnt1 < 0) {
-			evc1.init();
-		}
-		if (ram_data.dir == sysdefs::general::dir_out) {
-			evc1.inc();
-			++p_data->ev_cnt1;
-			DEBUG_MSG("ev_cnt1: " + String(p_data->ev_cnt1));
-		}
-		event_pending = false;
-		ram_data.edge_lb0 = false;
-		ram_data.edge_lb1 = false;
-		ram_data.dir = 0;
-	}
-
 	rtc_buf.setBuffer(&ram_data);
 
-	if (event_pending) {
-		//Timeout in case the second event does not occur
-		reset_cntdown = sysdefs::general::event_timeout;
-	}
+	// Reset the interrupt src information.
+	i2c_reg &=
+			~(sysdefs::res_ctrl::int_src_esp | sysdefs::res_ctrl::int_src_mcp);
+
+	attiny88.sendData(i2c_reg);
 
 	if (p_data->wlan_en) {
 		next_state = ST_WIFI_INIT;

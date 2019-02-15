@@ -56,4 +56,13 @@ struct BumbleBeeRamData {
 	uint16_t ts_diff = 0;
 };//size 33 (mit lb1 und dir sense)
 
+enum event_eval {
+	new_edge_lb0 = 0,
+	new_edge_lb1,
+	count_event_in,
+	count_event_out,
+	cleanup,
+	idle
+} ;
+
 #endif /* LIB_SYSTEM_TYPES_H_ */
