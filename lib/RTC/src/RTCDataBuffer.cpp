@@ -6,6 +6,7 @@
  */
 
 #include <RTCDataBuffer.h>
+#include "../../test/src/serial_debug.h"
 extern "C" {
 #include <user_interface.h>
 }
@@ -21,9 +22,12 @@ RTCDataBuffer::~RTCDataBuffer() {
 
 void RTCDataBuffer::setBuffer(BumbleBeeRamData* data) {
 	if (sizeof(*data) > sysdefs::rtc::rtc_memsize) {
+		DEBUG_MSG("RAM Buf Ovf!")
 		return;
 	}
-	system_rtc_mem_write(mem_location, data, sizeof(*data));
+	if (!system_rtc_mem_write(mem_location, data, sizeof(*data))) {
+		DEBUG_MSG("RAM write failed...");
+	}
 }
 
 void RTCDataBuffer::init() {
@@ -36,7 +40,9 @@ BumbleBeeRamData RTCDataBuffer::getBuffer() {
 	if (sizeof(rv) > sysdefs::rtc::rtc_memsize) {
 		return rv;
 	}
-	system_rtc_mem_read(mem_location, &rv, sizeof(rv));
+	if (!system_rtc_mem_read(mem_location, &rv, sizeof(rv))) {
+		DEBUG_MSG("RAM read failed...");
+	}
 	return rv;
 }
 

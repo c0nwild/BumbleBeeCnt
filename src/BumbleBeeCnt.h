@@ -143,9 +143,8 @@ private:
 
 	//RTC ram based event counter, one for each channel
 	rtc::EventCounter evc0;
-#ifdef LB1
 	rtc::EventCounter evc1;
-#endif
+
 	//RTC ram based data buffer
 	rtc::RTCDataBuffer rtc_buf;
 

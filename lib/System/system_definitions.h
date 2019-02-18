@@ -47,11 +47,9 @@ const uint8_t rtc_memstart = 65;
 const uint8_t rtc_memsize = 127;
 const uint8_t rtc_sreg = (rtc_memstart + 0); //2x uint32 needs 8 bytes
 const uint8_t rtc_errmem = (rtc_memstart + 8); //2x unsinged int (32bit) needs 8 bytes
-const uint8_t rtc_bmbcnt_data = (rtc_memstart + 16); // BumbleBeeRamData 33 bytes
-const uint8_t rtc_eventcnt0 = (rtc_memstart + 49); //2x unsinged int (32bit) needs 8 bytes
-#ifdef LB1
-const uint8_t rtc_eventcnt1 = (rtc_memstart + 57); //2x unsinged int (32bit) needs 8 bytes
-#endif
+const uint8_t rtc_eventcnt0 = (rtc_memstart + 16); //2x unsinged int (32bit) needs 8 bytes
+const uint8_t rtc_eventcnt1 = (rtc_memstart + 24); //2x unsinged int (32bit) needs 8 bytes
+const uint8_t rtc_bmbcnt_data = (rtc_memstart + 32); // BumbleBeeRamData 31 bytes
 } //rtc
 
 namespace debug {
