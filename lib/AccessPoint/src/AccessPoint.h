@@ -29,6 +29,8 @@ private:
 	String current_path;
 
 	Ds1307::DateTime dt;
+	String _ssid;
+	String _password;
 
 	String retrieveParams(String parameter_string, String parameter_name);
 
@@ -41,12 +43,11 @@ public:
 	static String _scale_calib;
 	static bool update_time;
 
-	AccessPoint();
+	AccessPoint(String ssid, String passwd);
 	virtual ~AccessPoint();
 
 	int initWifi();
-	int stopWifi();
-	bool sendHTMLcontent(WiFiClient client, String content);
+	int stopWifi();bool sendHTMLcontent(WiFiClient client, String content);
 	String getCurrentPath();
 
 	String getTimeString();

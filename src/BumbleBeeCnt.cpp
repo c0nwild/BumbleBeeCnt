@@ -7,6 +7,7 @@
 
 #include <BumbleBeeCnt.h>
 #include <time.h>
+#include <stdlib.h>
 
 void BumbleBeeCnt::trigger() {
 	ExternalEvent(ST_WAKEUP);
@@ -272,14 +273,42 @@ void BumbleBeeCnt::st_init_peripherals() {
 //State function
 void BumbleBeeCnt::st_wifi_init() {
 	float weight;
+	states next_state = ST_WIFI;
+
+	String ssid = "";
+	String passwd = "";
+	File config_file;
+
+	WiFiConfig cfg;
+
+	StaticJsonBuffer<256> jsonConfigBuf;
+
 	weight = weight_meas();
 	DEBUG_MSG("Weight: " + String(weight));
 
-	ap.initWifi();
+	config_file = SD.open(sysdefs::general::config_filename);
+
+	JsonObject &configRoot = jsonConfigBuf.parseObject(config_file);
+
+	if(!configRoot.success()){
+		DEBUG_MSG("Error reading config.json!");
+		next_state = ST_WIFI_END;
+	}
+	strlcpy(cfg.ssid,
+	          configRoot["ssid"],
+	          sizeof(cfg.ssid));
+	strlcpy(cfg.passwd,
+	          configRoot["password"],
+	          sizeof(cfg.passwd));
+
+	config_file.close();
+
+	ap = new AccessPoint(ssid, passwd);
+	ap->initWifi();
 
 	// Wir wollen eine initiale Gewichtsmessung für die Sensoranzeige.
-	ap.setWeight(weight);
-	InternalEvent(ST_WIFI, NULL);
+	ap->setWeight(weight);
+	InternalEvent(next_state, NULL);
 }
 
 //State function
@@ -301,13 +330,13 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 	String current_page = "";
 
 	float weight;
-	weight = ap.getWeight();
+	weight = ap->getWeight();
 	if (++weight_trigger == 0) {
 		weight = weight_meas();
 	}
 
-	str_time = ap.getTimeString();
-	str_scale_calib = ap.getScaleCalibString();
+	str_time = ap->getTimeString();
+	str_scale_calib = ap->getScaleCalibString();
 
 	if (str_time != "") {
 		Ds1307::DateTime init_date;
@@ -350,15 +379,15 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 	}
 
 	ds1307.getDateTime(&dt);
-	ap.setDateTime(dt);
+	ap->setDateTime(dt);
 
 	read_sensors(&p_data);
 	read_port_expander(&p_data);
 
-	ap.setPeripheralData(p_data);
-	ap.setWeight(weight);
+	ap->setPeripheralData(p_data);
+	ap->setWeight(weight);
 
-	ap.handleClient();
+	ap->handleClient();
 
 	if (!(p_data.mcp_gpioab & sysdefs::mcp::wlan_en)) {
 		next_state = ST_WIFI_END;
@@ -369,7 +398,8 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 
 //State function
 void BumbleBeeCnt::st_wifi_end() {
-	ap.stopWifi();
+	ap->stopWifi();
+	delete ap;
 	InternalEvent(ST_READ_PERIPHERALS, NULL);
 }
 

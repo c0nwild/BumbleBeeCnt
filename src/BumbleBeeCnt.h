@@ -25,6 +25,7 @@
 #define MCP_TARE 0x80
 
 #include "../test/src/serial_debug.h"
+#include <Wire.h>
 #include <StateMachine.h>
 #include "../lib/I2C/I2CCom.h"
 #include <Arduino.h>
@@ -39,16 +40,17 @@
 #include <system_definitions.h>
 #include <EventCounter.h>
 #include <RTCDataBuffer.h>
+#include <ArduinoJson.h>
 
 class BumbleBeeCnt: public StateMachine {
 public:
 	BumbleBeeCnt() :
 			StateMachine(ST_MAX_STATES),
+			ap(NULL),
 			evc0(sysdefs::rtc::rtc_eventcnt0),
-#ifdef LB1
 			evc1(sysdefs::rtc::rtc_eventcnt1),
-#endif
-			rtc_buf(sysdefs::rtc::rtc_bmbcnt_data) {
+			rtc_buf(sysdefs::rtc::rtc_bmbcnt_data)
+			{
 	}
 	void trigger();
 private:
@@ -139,7 +141,7 @@ private:
 	i2c::I2CCom attiny88;
 
 	//WebServer
-	AccessPoint ap;
+	AccessPoint *ap;
 
 	//RTC ram based event counter, one for each channel
 	rtc::EventCounter evc0;

@@ -15,19 +15,17 @@ String AccessPoint::_scale_calib;
 bool AccessPoint::update_time;
 
 int AccessPoint::initWifi() {
-	const char *ssid = sysdefs::wifi::ssid.c_str();
-	const char *password = sysdefs::wifi::passphrase.c_str();
-
 	// AP mode
 	WiFi.mode(WIFI_AP);
-	WiFi.softAP(ssid, password);
+	WiFi.softAP(_ssid.c_str(), _password.c_str());
 	server.begin();
 
 	DEBUG_MSG("AP started...");
 	return 0;
 }
 
-AccessPoint::AccessPoint() {}
+AccessPoint::AccessPoint(String ssid, String passwd):_ssid(ssid),
+		_password(passwd){}
 
 AccessPoint::~AccessPoint() {}
 

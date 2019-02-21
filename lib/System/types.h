@@ -52,6 +52,11 @@ enum event_eval {
 	count_event_out,
 	cleanup,
 	idle
-} ;
+};
+
+struct WiFiConfig {
+  char ssid[64] = {0};
+  char passwd[128] = {0};
+};
 
 #endif /* LIB_SYSTEM_TYPES_H_ */
