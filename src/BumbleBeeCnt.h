@@ -46,7 +46,6 @@ class BumbleBeeCnt: public StateMachine {
 public:
 	BumbleBeeCnt() :
 			StateMachine(ST_MAX_STATES),
-			ap(NULL),
 			evc0(sysdefs::rtc::rtc_eventcnt0),
 			evc1(sysdefs::rtc::rtc_eventcnt1),
 			rtc_buf(sysdefs::rtc::rtc_bmbcnt_data)
@@ -82,6 +81,7 @@ private:
 
 	String data_file_name = sysdefs::general::log_filename;
 	String error_file_name = sysdefs::general::error_filename;
+	String config_file_name = sysdefs::general::config_filename;
 
 	uint8_t i2c_reg = 0;
 
@@ -141,7 +141,7 @@ private:
 	i2c::I2CCom attiny88;
 
 	//WebServer
-	AccessPoint *ap;
+	AccessPoint ap;
 
 	//RTC ram based event counter, one for each channel
 	rtc::EventCounter evc0;

@@ -29,8 +29,8 @@ private:
 	String current_path;
 
 	Ds1307::DateTime dt;
-	String _ssid;
-	String _password;
+	const char* _ssid;
+	const char* _password;
 
 	String retrieveParams(String parameter_string, String parameter_name);
 
@@ -43,7 +43,7 @@ public:
 	static String _scale_calib;
 	static bool update_time;
 
-	AccessPoint(String ssid, String passwd);
+	AccessPoint();
 	virtual ~AccessPoint();
 
 	int initWifi();
@@ -56,6 +56,8 @@ public:
 	bool setDateTime(Ds1307::DateTime d);
 	bool setWeight(float w);
 	float getWeight();
+	bool setPasswd(const char* pw);
+	bool setSSID(const char* id);
 
 	void handleClient();
 };

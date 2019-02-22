@@ -277,37 +277,45 @@ void BumbleBeeCnt::st_wifi_init() {
 
 	String ssid = "";
 	String passwd = "";
+	String config_str = "{ \"ssid\",\"error\"}";
 	File config_file;
 
 	WiFiConfig cfg;
 
-	StaticJsonBuffer<256> jsonConfigBuf;
+	const size_t capacity = 128;
+	DynamicJsonBuffer jsonBuffer(capacity);
 
 	weight = weight_meas();
 	DEBUG_MSG("Weight: " + String(weight));
 
-	config_file = SD.open(sysdefs::general::config_filename);
+	config_file = SD.open(config_file_name, FILE_READ);
 
-	JsonObject &configRoot = jsonConfigBuf.parseObject(config_file);
-
-	if(!configRoot.success()){
-		DEBUG_MSG("Error reading config.json!");
-		next_state = ST_WIFI_END;
+	if (config_file) {
+		config_str = config_file.readString();
+		config_str.trim();
+	} else {
+		DEBUG_MSG("Error opening " + config_file_name);
 	}
-	strlcpy(cfg.ssid,
-	          configRoot["ssid"],
-	          sizeof(cfg.ssid));
-	strlcpy(cfg.passwd,
-	          configRoot["password"],
-	          sizeof(cfg.passwd));
+
+	JsonObject &configRoot = jsonBuffer.parseObject(config_str);
+
+	if (!configRoot.success()) {
+		DEBUG_MSG("Error reading CONFIG!");
+		next_state = ST_WIFI_END;
+	} else {
+		DEBUG_MSG("Success reading CONFIG!");
+		const char* _ssid = configRoot["ssid"];
+		const char* _pw = configRoot["passwd"];
+		ap.setSSID(_ssid);
+		ap.setPasswd(_pw);
+		ap.initWifi();
+
+		// Wir wollen eine initiale Gewichtsmessung für die Sensoranzeige.
+		ap.setWeight(weight);
+	}
 
 	config_file.close();
 
-	ap = new AccessPoint(ssid, passwd);
-	ap->initWifi();
-
-	// Wir wollen eine initiale Gewichtsmessung für die Sensoranzeige.
-	ap->setWeight(weight);
 	InternalEvent(next_state, NULL);
 }
 
@@ -330,13 +338,13 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 	String current_page = "";
 
 	float weight;
-	weight = ap->getWeight();
+	weight = ap.getWeight();
 	if (++weight_trigger == 0) {
 		weight = weight_meas();
 	}
 
-	str_time = ap->getTimeString();
-	str_scale_calib = ap->getScaleCalibString();
+	str_time = ap.getTimeString();
+	str_scale_calib = ap.getScaleCalibString();
 
 	if (str_time != "") {
 		Ds1307::DateTime init_date;
@@ -379,15 +387,15 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 	}
 
 	ds1307.getDateTime(&dt);
-	ap->setDateTime(dt);
+	ap.setDateTime(dt);
 
 	read_sensors(&p_data);
 	read_port_expander(&p_data);
 
-	ap->setPeripheralData(p_data);
-	ap->setWeight(weight);
+	ap.setPeripheralData(p_data);
+	ap.setWeight(weight);
 
-	ap->handleClient();
+	ap.handleClient();
 
 	if (!(p_data.mcp_gpioab & sysdefs::mcp::wlan_en)) {
 		next_state = ST_WIFI_END;
@@ -398,8 +406,9 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 
 //State function
 void BumbleBeeCnt::st_wifi_end() {
-	ap->stopWifi();
-	delete ap;
+	DEBUG_MSG("Stopping wifi...");
+	ap.stopWifi();
+
 	InternalEvent(ST_READ_PERIPHERALS, NULL);
 }
 

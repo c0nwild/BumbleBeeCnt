@@ -35,7 +35,7 @@ const String passphrase = "thereisnospoon";
 namespace general {
 const String log_filename = "data.txt";
 const String error_filename = "error.txt";
-const String config_filename = "config.json";
+const String config_filename = "CONFIG";
 const unsigned log_sensor_interval = 600; // in sec.
 const unsigned event_sum_interval = 60; // in sec.
 const unsigned event_timeout = 5; // in sec.

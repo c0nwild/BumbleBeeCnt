@@ -17,15 +17,14 @@ bool AccessPoint::update_time;
 int AccessPoint::initWifi() {
 	// AP mode
 	WiFi.mode(WIFI_AP);
-	WiFi.softAP(_ssid.c_str(), _password.c_str());
+	WiFi.softAP(_ssid, _password);
 	server.begin();
 
 	DEBUG_MSG("AP started...");
 	return 0;
 }
 
-AccessPoint::AccessPoint(String ssid, String passwd):_ssid(ssid),
-		_password(passwd){}
+AccessPoint::AccessPoint(){}
 
 AccessPoint::~AccessPoint() {}
 
@@ -89,6 +88,16 @@ float AccessPoint::getWeight() {
 
 bool AccessPoint::setDateTime(Ds1307::DateTime d) {
 	dt = d;
+	return true;
+}
+
+bool AccessPoint::setPasswd(const char* pw) {
+	_password = pw;
+	return true;
+}
+
+bool AccessPoint::setSSID(const char* id) {
+	_ssid = id;
 	return true;
 }
 
