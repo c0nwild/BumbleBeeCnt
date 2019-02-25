@@ -2,6 +2,7 @@ extern "C" {
 #include "user_interface.h"
 }
 
+#include <sysconfig.h>
 #include <BumbleBeeCnt.h>
 
 BumbleBeeCnt st_machine_hw_test;

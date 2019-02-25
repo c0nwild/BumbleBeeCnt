@@ -8,22 +8,7 @@
 #ifndef SRC_BUMBLEBEECNT_H_
 #define SRC_BUMBLEBEECNT_H_
 
-/* Here go the system component definitions */
-#define LB1 // Second Lightbarrier present?
-#define DIR_SENSE // Direction sensing
-
-#define SERIAL_DEBUG
-//#define SERIAL_DEBUG_STATES
-//#define SERIAL_DEBUG_INT_CNTR
-
-#define MCP_GPIOA 0u
-#define MCP_GPIOB 1u
-
-#define MCP_WLAN_EN 0x1
-#define MCP_LB0 0x20
-#define MCP_LB1 0x40
-#define MCP_TARE 0x80
-
+#include <sysconfig.h>
 #include "../test/src/serial_debug.h"
 #include <Wire.h>
 #include <StateMachine.h>
@@ -47,7 +32,9 @@ public:
 	BumbleBeeCnt() :
 			StateMachine(ST_MAX_STATES),
 			evc0(sysdefs::rtc::rtc_eventcnt0),
+#ifdef LB1
 			evc1(sysdefs::rtc::rtc_eventcnt1),
+#endif
 			rtc_buf(sysdefs::rtc::rtc_bmbcnt_data)
 			{
 	}
@@ -145,7 +132,9 @@ private:
 
 	//RTC ram based event counter, one for each channel
 	rtc::EventCounter evc0;
+#ifdef LB1
 	rtc::EventCounter evc1;
+#endif
 
 	//RTC ram based data buffer
 	rtc::RTCDataBuffer rtc_buf;
