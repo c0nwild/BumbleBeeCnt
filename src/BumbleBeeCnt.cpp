@@ -354,6 +354,7 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 
 	str_time = ap.getTimeString();
 	str_scale_calib = ap.getScaleCalibString();
+	str_scale_calib.toLowerCase();
 
 	if (str_time != "") {
 		Ds1307::DateTime init_date;
