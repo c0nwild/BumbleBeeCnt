@@ -29,8 +29,8 @@ private:
 	String current_path;
 
 	Ds1307::DateTime dt;
-	const char* _ssid;
-	const char* _password;
+	String _ssid;
+	String _password;
 
 	String retrieveParams(String parameter_string, String parameter_name);
 
@@ -56,8 +56,8 @@ public:
 	bool setDateTime(Ds1307::DateTime d);
 	bool setWeight(float w);
 	float getWeight();
-	bool setPasswd(const char* pw);
-	bool setSSID(const char* id);
+	bool setPasswd(String pw);
+	bool setSSID(String id);
 
 	void handleClient();
 };

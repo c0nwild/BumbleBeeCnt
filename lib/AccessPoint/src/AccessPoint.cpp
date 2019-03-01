@@ -6,6 +6,7 @@
  */
 
 #include "AccessPoint.h"
+#include <cstring>
 
 WiFiServer AccessPoint::server(80);
 WebContent AccessPoint::web_content;
@@ -24,9 +25,11 @@ int AccessPoint::initWifi() {
 	return 0;
 }
 
-AccessPoint::AccessPoint(){}
+AccessPoint::AccessPoint() {
+}
 
-AccessPoint::~AccessPoint() {}
+AccessPoint::~AccessPoint() {
+}
 
 String AccessPoint::getTimeString() {
 	String _time_loc = _time;
@@ -91,12 +94,12 @@ bool AccessPoint::setDateTime(Ds1307::DateTime d) {
 	return true;
 }
 
-bool AccessPoint::setPasswd(const char* pw) {
+bool AccessPoint::setPasswd(String pw) {
 	_password = pw;
 	return true;
 }
 
-bool AccessPoint::setSSID(const char* id) {
+bool AccessPoint::setSSID(String id) {
 	_ssid = id;
 	return true;
 }
@@ -175,9 +178,11 @@ void AccessPoint::handleClient() {
 	if (sPath == "/") {
 		String content_head = WebContent::webpage_head;
 		String content_body = WebContent::webpage_body_main;
+		String content_ssid = "\n<div>SSID: " + String(_ssid) + "</div>\n";
 		String content_tail = WebContent::webpage_tail;
 
-		sendHTMLcontent(client, content_head+content_body+content_tail);
+		sendHTMLcontent(client,
+				content_head + content_body + content_ssid + content_tail);
 
 	} else if (sPath == "/download") {
 		File logFile = SD.open("DATA.TXT");
@@ -200,9 +205,10 @@ void AccessPoint::handleClient() {
 	} else if (sPath == "/sensors") {
 		String content = "";
 		web_content.clear();
-		content = "Time: " + String((uint16_t) dt.year + 2000) + "-" + String(dt.month) + "-"
-				+ String(dt.day) + "_" + String(dt.hour) + ":" + String(dt.minute)
-				+ ":" + String(dt.second);
+		content = "Time: " + String((uint16_t) dt.year + 2000) + "-"
+				+ String(dt.month) + "-" + String(dt.day) + "_"
+				+ String(dt.hour) + ":" + String(dt.minute) + ":"
+				+ String(dt.second);
 		web_content.append(content);
 		content = web_content.create_weight_entry(peripheral_data.weight);
 		web_content.append(content);
@@ -239,7 +245,7 @@ void AccessPoint::handleClient() {
 
 		ret_str = (rv) ? "Done" : "Error";
 
-		sendHTMLcontent(client,ret_str);
+		sendHTMLcontent(client, ret_str);
 
 	} else if (sPath != "/") {
 		File logFile = SD.open(sPath);

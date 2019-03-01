@@ -313,10 +313,10 @@ void BumbleBeeCnt::st_wifi_init() {
 		next_state = ST_WIFI_END;
 	} else {
 		DEBUG_MSG("Success reading CONFIG!");
-		const char* _ssid = configRoot["ssid"];
-		const char* _pw = configRoot["passwd"];
-		ap.setSSID(_ssid);
-		ap.setPasswd(_pw);
+		String ssid = configRoot["ssid"];
+		String pw = configRoot["passwd"];
+		ap.setSSID(ssid);
+		ap.setPasswd(pw);
 		ap.initWifi();
 
 		// Wir wollen eine initiale Gewichtsmessung für die Sensoranzeige.
