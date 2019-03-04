@@ -294,9 +294,6 @@ void BumbleBeeCnt::st_wifi_init() {
 	const size_t capacity = 128;
 	DynamicJsonBuffer jsonBuffer(capacity);
 
-	weight = weight_meas();
-	DEBUG_MSG("Weight: " + String(weight));
-
 	config_file = SD.open(config_file_name, FILE_READ);
 
 	if (config_file) {
@@ -320,6 +317,7 @@ void BumbleBeeCnt::st_wifi_init() {
 		ap.initWifi();
 
 		// Wir wollen eine initiale Gewichtsmessung für die Sensoranzeige.
+		weight = weight_meas();
 		ap.setWeight(weight);
 	}
 
@@ -331,7 +329,6 @@ void BumbleBeeCnt::st_wifi_init() {
 //State function
 void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 	BumbleBeeCntData p_data;
-	static uint8_t weight_trigger = 0;
 
 	states next_state = ST_WIFI;
 	String str_time = "";
@@ -348,8 +345,9 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 
 	float weight;
 	weight = ap.getWeight();
-	if (++weight_trigger == 0) {
+	if (ap.need_weight()) {
 		weight = weight_meas();
+		ap.unset_need_weight();
 	}
 
 	str_time = ap.getTimeString();

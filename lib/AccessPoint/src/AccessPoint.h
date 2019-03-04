@@ -32,6 +32,8 @@ private:
 	String _ssid;
 	String _password;
 
+	bool _need_weight = false;
+
 	String retrieveParams(String parameter_string, String parameter_name);
 
 public:
@@ -58,6 +60,9 @@ public:
 	float getWeight();
 	bool setPasswd(String pw);
 	bool setSSID(String id);
+
+	bool need_weight();
+	void unset_need_weight();
 
 	void handleClient();
 };

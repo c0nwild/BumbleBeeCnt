@@ -18,7 +18,7 @@ bool AccessPoint::update_time;
 int AccessPoint::initWifi() {
 	// AP mode
 	WiFi.mode(WIFI_AP);
-	WiFi.softAP(_ssid, _password);
+	WiFi.softAP(_ssid.c_str(), _password.c_str());
 	server.begin();
 
 	DEBUG_MSG("AP started...");
@@ -102,6 +102,14 @@ bool AccessPoint::setPasswd(String pw) {
 bool AccessPoint::setSSID(String id) {
 	_ssid = id;
 	return true;
+}
+
+bool AccessPoint::need_weight() {
+	return _need_weight;
+}
+
+void AccessPoint::unset_need_weight() {
+	_need_weight = false;
 }
 
 void AccessPoint::handleClient() {
@@ -204,6 +212,7 @@ void AccessPoint::handleClient() {
 
 	} else if (sPath == "/sensors") {
 		String content = "";
+		_need_weight = true;
 		web_content.clear();
 		content = "Time: " + String((uint16_t) dt.year + 2000) + "-"
 				+ String(dt.month) + "-" + String(dt.day) + "_"
