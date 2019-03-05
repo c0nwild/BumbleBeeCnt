@@ -25,7 +25,7 @@
 #define DEBUG_MSG(x)
 #define DEBUG_MSG_ARG(x,t)
 #define DEBUG_MSG_PASS(x)
-#define DEBUB_MSG_FAIL(x)
+#define DEBUG_MSG_FAIL(x)
 #endif //SERIAL_DEBUG
 
 //Debug ID´s for peripheral hardware

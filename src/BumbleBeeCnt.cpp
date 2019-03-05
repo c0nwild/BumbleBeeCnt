@@ -59,7 +59,7 @@ int BumbleBeeCnt::init_peripheral_system() {
 		DEBUG_MSG_ARG(DEBUG_ID_BME280, HEX);
 		DEBUG_MSG_PASS(sysdefs::debug::bme280);
 	} else {
-		DEBUG_MSG_FAIL(sysdefs::debug::bme280)
+
 		retval += -DEBUG_ID_BME280;
 	}
 
@@ -68,8 +68,7 @@ int BumbleBeeCnt::init_peripheral_system() {
 	EEPROM.end();
 
 	DEBUG_MSG("Offset: " + String(scale_offset))
-
-	scale.setTareOffset(scale_offset);
+	scale.set_offset(scale_offset);
 
 	pinMode(chipSelectSD, OUTPUT);
 	if (SD.begin(chipSelectSD)) {
@@ -87,15 +86,12 @@ void BumbleBeeCnt::do_tare() {
 	DEBUG_MSG("Tare...")
 
 	//Just trigger weight measurement
-	(void) weight_meas();
+	scale.begin(D3,D4);
+	scale.power_up();
+	scale.tare(5);
+	scale.power_down();
 
-	DEBUG_MSG("Tare weight meas: " + String(scale.getData()))
-
-	offset = scale.smoothedData();
-
-	scale.setTareOffset(offset);
-
-	DEBUG_MSG("Tare offset: " + String(offset))
+	offset = scale.get_offset();
 
 	EEPROM.begin(128);
 	EEPROM.put(8, offset);
@@ -114,8 +110,6 @@ float BumbleBeeCnt::weight_meas() {
 	uint8_t scale_status = 0;
 	uint8_t meas_cnt = 0;
 
-	scale.begin(D3, D4);
-//	scale.start(2000);
 	EEPROM.begin(128);
 	EEPROM.get(0, calib);
 	EEPROM.end();
@@ -128,27 +122,18 @@ float BumbleBeeCnt::weight_meas() {
 	EEPROM.end();
 
 	DEBUG_MSG("Calib factor: " + String(calib));
-	DEBUG_MSG("Offset: " + String(scale.getTareOffset()))
 
-	scale.setCalFactor(calib);
-	scale.setTareOffset(offset);
+	scale.begin(D3,D4);
+	scale.power_up();
+	scale.set_offset(offset);
+	scale.set_scale(calib);
 
-	timeout = millis();
-	while (meas_cnt < 10) {
-		scale_status = scale.update();
-		if (scale_status > 0)
-			++meas_cnt;
+	rv = scale.get_units();
 
-		if ((millis() - timeout) > 2000) {
-			DEBUG_MSG("Timeout!")
-			break;
-		}
-	}
-	rv = scale.getData();
+	scale.power_down();
 
-	scale.powerDown();
 	if (isnan(rv)) {
-		DEBUG_MSG_FAIL(sysdefs::debug::hx711)
+		DEBUG_MSG_FAIL(sysdefs::debug::hx711);
 	} else {
 		DEBUG_MSG("Weight is: " + String(rv));
 	}
@@ -567,7 +552,7 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 			*d_out = *p_data;
 			log_str = prepare_log_str(dt, p_data);
 #ifdef SERIAL_DEBUG
-	Serial.println(log_str);
+			Serial.println(log_str);
 #endif
 			d_out->info = log_str;
 
@@ -646,7 +631,7 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	//The main sub-statemachine for event evaluation.
 	while (cycle_counter--) {
 		switch (st_eval) {
-		case new_edge_lb0:
+			case new_edge_lb0:
 			DEBUG_MSG("new edge lb0")
 			;
 			//Second edge on the same LB -> discard event
@@ -664,7 +649,7 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 				st_eval = count_event_out;
 			}
 			break;
-		case new_edge_lb1:
+			case new_edge_lb1:
 			DEBUG_MSG("new edge lb1")
 			;
 			//Second edge on the same LB -> discard event
@@ -682,7 +667,7 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 				st_eval = count_event_in;
 			}
 			break;
-		case count_event_in:
+			case count_event_in:
 			DEBUG_MSG("count event in")
 			;
 			if (p_data->ev_cnt_in < 0) {
@@ -695,7 +680,7 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 			st_eval = cleanup;
 			++cycle_counter;
 			break;
-		case count_event_out:
+			case count_event_out:
 			DEBUG_MSG("count event out")
 			;
 			if (p_data->ev_cnt_out < 0) {
@@ -708,7 +693,7 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 			st_eval = cleanup;
 			++cycle_counter;
 			break;
-		case cleanup:
+			case cleanup:
 			DEBUG_MSG("cleanup")
 			;
 			ram_data.edge_lb0 = false;
@@ -716,14 +701,14 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 			ram_data.dir = 0;
 			cycle_counter = 0;
 			break;
-		case idle:
+			case idle:
 			DEBUG_MSG("idle")
 			;
 			if (ram_data.edge_lb0 || ram_data.edge_lb1) {
 				reset_cntdown = sysdefs::general::event_timeout;
 			}
 			break;
-		default:
+			default:
 			DEBUG_MSG("Eval SM invalid state.")
 			;
 		}
@@ -735,7 +720,7 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 	// Reset the interrupt src information.
 	i2c_reg &=
-			~(sysdefs::res_ctrl::int_src_esp | sysdefs::res_ctrl::int_src_mcp);
+	~(sysdefs::res_ctrl::int_src_esp | sysdefs::res_ctrl::int_src_mcp);
 
 	attiny88.sendData(i2c_reg);
 

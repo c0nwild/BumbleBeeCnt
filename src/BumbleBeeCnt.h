@@ -18,7 +18,7 @@
 #include "../lib/Ds1307/Ds1307.h"
 #include <SD.h>
 #include <BME280I2C.h>
-#include <HX711_ADC.h>
+#include <HX711.h>
 #include <AccessPoint.h>
 #include <EEPROM.h>
 #include <types.h>
@@ -122,7 +122,7 @@ private:
 
 	//Scale
 	//		HX711_ADC scale;
-	HX711_ADC scale;
+	HX711 scale;
 
 	//Interrupt controller
 	i2c::I2CCom attiny88;
