@@ -49,7 +49,7 @@ public:
 	virtual ~AccessPoint();
 
 	int initWifi();
-	int stopWifi();bool sendHTMLcontent(WiFiClient client, String content);
+	int stopWifi();bool sendHTMLcontent(unsigned http_code, WiFiClient client, String content);
 	String getCurrentPath();
 
 	String getTimeString();
@@ -61,7 +61,7 @@ public:
 	bool setPasswd(String pw);
 	bool setSSID(String id);
 
-	bool need_weight();
+	bool set_need_weight();
 	void unset_need_weight();
 
 	void handleClient();

@@ -330,7 +330,7 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 
 	float weight;
 	weight = ap.getWeight();
-	if (ap.need_weight()) {
+	if (ap.set_need_weight()) {
 		weight = weight_meas();
 		ap.unset_need_weight();
 	}

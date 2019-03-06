@@ -43,8 +43,10 @@ String AccessPoint::getScaleCalibString() {
 	return _scale_calib_loc;
 }
 
-bool AccessPoint::sendHTMLcontent(WiFiClient client, String content) {
-	String sHeader = "HTTP/1.1 200 OK\r\n";
+bool AccessPoint::sendHTMLcontent(unsigned http_code, WiFiClient client, String content) {
+	String sHeader = "HTTP/1.1 ";
+	sHeader += String(http_code);
+	sHeader += " OK\r\n";
 	sHeader += "Content-Length: ";
 	sHeader += content.length();
 	sHeader += "\r\n";
@@ -104,7 +106,7 @@ bool AccessPoint::setSSID(String id) {
 	return true;
 }
 
-bool AccessPoint::need_weight() {
+bool AccessPoint::set_need_weight() {
 	return _need_weight;
 }
 
@@ -189,17 +191,20 @@ void AccessPoint::handleClient() {
 		String content_ssid = "\n<div>SSID: " + String(_ssid) + "</div>\n";
 		String content_tail = WebContent::webpage_tail;
 
-		sendHTMLcontent(client,
+		sendHTMLcontent(200, client,
 				content_head + content_body + content_ssid + content_tail);
 
 	} else if (sPath == "/download") {
 		File logFile = SD.open("DATA.TXT");
+		String filename = _ssid + "_" + String((uint16_t) dt.year + 2000) + "-"
+				+ String(dt.month) + "-" + String(dt.day) + ".txt";
 
 		sHeader = "HTTP/1.1 200 OK\r\n";
 		sHeader += "Content-Length: ";
 		sHeader += logFile.size();
 		sHeader += "\r\n";
-		sHeader += "Content-Type: application/octet-stream\r\n";
+		sHeader += "Content-Type: application/text\r\n";
+		sHeader += "Content-Disposition: attachment; name='DATA'; filename=" + filename + "\r\n";
 		sHeader += "Connection: close\r\n";
 		sHeader += "\r\n";
 
@@ -208,7 +213,7 @@ void AccessPoint::handleClient() {
 		logFile.close();
 
 	} else if (sPath == "/settings") {
-		sendHTMLcontent(client, WebContent::webpage_settings);
+		sendHTMLcontent(200, client, WebContent::webpage_settings);
 
 	} else if (sPath == "/sensors") {
 		String content = "";
@@ -226,7 +231,7 @@ void AccessPoint::handleClient() {
 		content = web_content.create_humid_entry(peripheral_data.humidity);
 		web_content.append(content);
 
-		sendHTMLcontent(client, web_content.output());
+		sendHTMLcontent(206, client, web_content.output());
 
 	} else if (sPath == "/scale_calib") {
 		String content = "";
@@ -244,7 +249,7 @@ void AccessPoint::handleClient() {
 				"Scale cal value");
 		web_content.append(content);
 
-		sendHTMLcontent(client, web_content.output());
+		sendHTMLcontent(205, client, web_content.output());
 
 	} else if (sPath == "/wipe_log_file") {
 		String ret_str;
@@ -254,7 +259,7 @@ void AccessPoint::handleClient() {
 
 		ret_str = (rv) ? "Done" : "Error";
 
-		sendHTMLcontent(client, ret_str);
+		sendHTMLcontent(200, client, ret_str);
 
 	} else if (sPath != "/") {
 		File logFile = SD.open(sPath);
