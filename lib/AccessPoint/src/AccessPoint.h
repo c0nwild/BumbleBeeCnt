@@ -33,6 +33,8 @@ private:
 	String _password;
 
 	bool _need_weight = false;
+	bool _prepare_cal = false;
+	bool _do_cal = false;
 
 	String retrieveParams(String parameter_string, String parameter_name);
 
@@ -61,8 +63,13 @@ public:
 	bool setPasswd(String pw);
 	bool setSSID(String id);
 
-	bool set_need_weight();
-	void unset_need_weight();
+	inline bool get_need_weight(){return _need_weight;}
+	inline void unset_need_weight(){_need_weight = false;}
+
+	inline bool get_prepare_cal(){return _prepare_cal;}
+	inline void unset_prepare_cal(){_prepare_cal = false;}
+	inline bool get_do_cal(){return _do_cal;}
+	inline void unset_do_cal(){_do_cal = false;}
 
 	void handleClient();
 };

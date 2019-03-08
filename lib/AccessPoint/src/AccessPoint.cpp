@@ -106,14 +106,6 @@ bool AccessPoint::setSSID(String id) {
 	return true;
 }
 
-bool AccessPoint::set_need_weight() {
-	return _need_weight;
-}
-
-void AccessPoint::unset_need_weight() {
-	_need_weight = false;
-}
-
 void AccessPoint::handleClient() {
 	// Check if a client has connected
 	client = server.available();
@@ -211,6 +203,31 @@ void AccessPoint::handleClient() {
 		client.print(sHeader);
 		client.write(logFile);
 		logFile.close();
+	} else if (sPath == "/prepare_cal") {
+		String ret_str;
+
+		_prepare_cal = true;
+
+		ret_str = R"=====(
+			<head> 
+		  		<meta http-equiv="refresh" content="0; URL=/scale_calib" />
+			</head>
+		)=====";
+
+		sendHTMLcontent(308, client, ret_str);
+
+	} else if (sPath == "/do_cal") {
+		String ret_str;
+
+		_do_cal = true;
+
+		ret_str = R"=====(
+			<head> 
+		  		<meta http-equiv="refresh" content="0; URL=/scale_calib" />
+			</head>
+		)=====";
+
+		sendHTMLcontent(308, client, ret_str);
 
 	} else if (sPath == "/settings") {
 		sendHTMLcontent(200, client, WebContent::webpage_settings);
@@ -248,18 +265,25 @@ void AccessPoint::handleClient() {
 		content = web_content.create_input_form("scale_calib",
 				"Scale cal value");
 		web_content.append(content);
+		content = web_content.create_button("Prepare calib", "/prepare_cal");
+		web_content.append(content);
+		content = web_content.create_button("Do calib", "/do_cal");
+		web_content.append(content);
 
 		sendHTMLcontent(205, client, web_content.output());
 
 	} else if (sPath == "/wipe_log_file") {
 		String ret_str;
-		boolean rv;
 
-		rv = SD.remove(sysdefs::general::log_filename);
+		SD.remove(sysdefs::general::log_filename);
 
-		ret_str = (rv) ? "Done" : "Error";
+		ret_str = R"=====(
+			<head> 
+		  		<meta http-equiv="refresh" content="0; URL=/" />
+			</head>
+		)=====";
 
-		sendHTMLcontent(200, client, ret_str);
+		sendHTMLcontent(308, client, ret_str);
 
 	} else if (sPath != "/") {
 		File logFile = SD.open(sPath);

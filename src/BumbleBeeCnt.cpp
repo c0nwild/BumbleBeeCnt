@@ -106,9 +106,6 @@ float BumbleBeeCnt::weight_meas() {
 	float rv = 0.0;
 	float calib = 0.0;
 	long offset = 0;
-	unsigned long timeout = 0;
-	uint8_t scale_status = 0;
-	uint8_t meas_cnt = 0;
 
 	EEPROM.begin(128);
 	EEPROM.get(0, calib);
@@ -155,6 +152,22 @@ void BumbleBeeCnt::read_port_expander(BumbleBeeCntData *p_data) {
 void BumbleBeeCnt::eval_peripheral_event(uint8_t mcp_gpioa) {
 // data processing here
 
+}
+
+void BumbleBeeCnt::prepare_cal() {
+	do_cal(1.0);
+	do_tare();
+	ap.unset_prepare_cal();
+}
+
+void BumbleBeeCnt::do_cal(float calib) {
+	Serial.print("web_cal_factor: ");
+	Serial.println(calib);
+	EEPROM.begin(128);
+	EEPROM.put(0, calib);
+	EEPROM.commit();
+	EEPROM.end();
+	ap.unset_do_cal();
 }
 
 String BumbleBeeCnt::prepare_log_str(Ds1307::DateTime dt, BumbleBeeCntData* d) {
@@ -330,9 +343,19 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 
 	float weight;
 	weight = ap.getWeight();
-	if (ap.set_need_weight()) {
+	if (ap.get_need_weight()) {
 		weight = weight_meas();
 		ap.unset_need_weight();
+	}
+
+	if (ap.get_prepare_cal()){
+		prepare_cal();
+	}
+
+	if(ap.get_do_cal()){
+		float weight;
+		weight = weight_meas();
+		do_cal(weight / sysdefs::hx711::hx711_cal_weight);
 	}
 
 	str_time = ap.getTimeString();
@@ -368,12 +391,7 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 		str_scale_calib = str_scale_calib.substring(3,
 				str_scale_calib.length());
 		calib = str_scale_calib.toFloat();
-		Serial.print("web_cal_factor: ");
-		Serial.println(calib);
-		EEPROM.begin(128);
-		EEPROM.put(0, calib);
-		EEPROM.commit();
-		EEPROM.end();
+		do_cal(calib);
 		weight = weight_meas();
 	} else if (str_scale_calib == "tare") {
 		do_tare();

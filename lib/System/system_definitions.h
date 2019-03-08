@@ -53,6 +53,10 @@ const uint8_t rtc_eventcnt1 = (rtc_memstart + 24); //2x unsinged int (32bit) nee
 const uint8_t rtc_bmbcnt_data = (rtc_memstart + 32); // BumbleBeeRamData 31 bytes
 } //rtc
 
+namespace hx711 {
+const float hx711_cal_weight = 1000.0;
+} //hx711
+
 namespace debug {
 const String bme280 = "bme280";
 const String sd = "sd";

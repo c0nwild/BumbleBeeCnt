@@ -24,6 +24,7 @@ struct WebContent {
 	String create_weight_entry(float w);
 
 	String create_input_form(String name, String placeholder);
+	String create_button(String name, String action);
 
 	String output(void);
 

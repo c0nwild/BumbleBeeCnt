@@ -144,3 +144,8 @@ String WebContent::create_input_form(String name = "",
 			+ "' placeholder='" + placeholder + "'></form>";
 }
 
+String WebContent::create_button(String name = "",
+		String action = "") {
+	return "<form action='" + action + "'><button name='" + name
+			+ "'></form>";
+}
