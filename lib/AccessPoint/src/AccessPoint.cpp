@@ -270,7 +270,7 @@ void AccessPoint::handleClient() {
 		content = web_content.create_button("Do calib", "/do_cal");
 		web_content.append(content);
 
-		sendHTMLcontent(205, client, web_content.output());
+		sendHTMLcontent(200, client, web_content.output());
 
 	} else if (sPath == "/wipe_log_file") {
 		String ret_str;
