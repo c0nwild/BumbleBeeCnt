@@ -233,8 +233,20 @@ void AccessPoint::handleClient() {
 		sendHTMLcontent(200, client, WebContent::webpage_settings);
 
 	} else if (sPath == "/sensors") {
-		String content = "";
+		String ret_str;
+
 		_need_weight = true;
+
+		ret_str = R"=====(
+			<head> 
+		  		<meta http-equiv="refresh" content="0; URL=/sensors_show" />
+			</head>
+		)=====";
+
+		sendHTMLcontent(308, client, ret_str);
+
+	} else if (sPath == "/sensors_show") {
+		String content = "";
 		web_content.clear();
 		content = "Time: " + String((uint16_t) dt.year + 2000) + "-"
 				+ String(dt.month) + "-" + String(dt.day) + "_"
