@@ -201,7 +201,7 @@ String BumbleBeeCnt::prepare_log_str(Ds1307::DateTime dt, BumbleBeeCntData* d) {
 	log_str += ",";
 	log_str += d->weight;
 	log_str += ",";
-	log_str += d->v_batt;
+	log_str += (float)d->v_batt / 1024 * 5;
 	log_str += ",";
 	log_str += ts;
 
