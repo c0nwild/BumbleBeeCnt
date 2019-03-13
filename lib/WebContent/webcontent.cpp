@@ -13,6 +13,7 @@ String _tagH2end = "</h2>";
 String _temp = "Temperature: ";
 String _humidity = "Humidity: ";
 String _weight = "Weight: ";
+String _volt = "Battery voltage: ";
 
 char WebContent::webpage_body_main[] =
 		R"=====( 	
@@ -115,6 +116,11 @@ String WebContent::create_humid_entry(float h) {
 String WebContent::create_weight_entry(float w) {
 	String _w_val_s(w);
 	return _weight + _w_val_s + " g";
+}
+
+String WebContent::create_volt_entry(float v) {
+	String _v_val_s(v);
+	return _volt + _v_val_s + " V";
 }
 
 String WebContent::output(void) {

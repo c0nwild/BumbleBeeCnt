@@ -22,6 +22,7 @@ struct WebContent {
 	String create_temp_entry(float t);
 	String create_humid_entry(float h);
 	String create_weight_entry(float w);
+	String create_volt_entry(float v);
 
 	String create_input_form(String name, String placeholder);
 	String create_button(String name, String action);

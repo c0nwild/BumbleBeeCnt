@@ -259,6 +259,9 @@ void AccessPoint::handleClient() {
 		web_content.append(content);
 		content = web_content.create_humid_entry(peripheral_data.humidity);
 		web_content.append(content);
+		content = web_content.create_volt_entry(
+			(float)peripheral_data.v_batt/1024.0*5.0);
+		web_content.append(content);
 
 		sendHTMLcontent(206, client, web_content.output());
 
