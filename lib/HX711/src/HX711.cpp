@@ -57,7 +57,7 @@ long HX711::read() {
 		// Will do nothing on Arduino but prevent resets of ESP8266 (Watchdog Issue)
 		yield();
 		if(millis() - timeout > 3000){
-			return -1;
+			return 0;
 		}
 	}
 
