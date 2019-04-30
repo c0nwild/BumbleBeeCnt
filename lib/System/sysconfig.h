@@ -14,7 +14,7 @@
 //#define DIR_SENSE // Direction sensing
 
 /* Debugging */
-#define SERIAL_DEBUG
+//#define SERIAL_DEBUG
 //#define SERIAL_DEBUG_STATES
 //#define SERIAL_DEBUG_INT_CNTR
 
