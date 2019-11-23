@@ -12,7 +12,6 @@
 #include "../test/src/serial_debug.h"
 #include <Wire.h>
 #include <StateMachine.h>
-#include "../lib/I2C/I2CCom.h"
 #include <Arduino.h>
 #include <Adafruit_MCP23017.h>
 #include "../lib/Ds1307/Ds1307.h"
@@ -26,6 +25,7 @@
 #include <EventCounter.h>
 #include <RTCDataBuffer.h>
 #include <ArduinoJson.h>
+#include <IRQController.h>
 
 class BumbleBeeCnt: public StateMachine {
 public:
@@ -127,7 +127,7 @@ private:
 	HX711 scale;
 
 	//Interrupt controller
-	i2c::I2CCom attiny88;
+	IRQController irqctl;
 
 	//WebServer
 	AccessPoint ap;

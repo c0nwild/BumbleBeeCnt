@@ -1,19 +1,17 @@
 /*
- * I2CCom.cpp
+ * IRQController.cpp
  *
  *  Created on: 08.10.2018
  *      Author: cwild
  */
 
-#include "../I2C/I2CCom.h"
+#include "IRQController.h"
 
-namespace i2c {
+IRQController::IRQController() {}
 
-I2CCom::I2CCom() {}
+IRQController::~IRQController() {}
 
-I2CCom::~I2CCom() {}
-
-bool I2CCom::sendData(uint8_t data) {
+bool IRQController::sendData(uint8_t data) {
 	uint8_t rv;
 	uint8_t to_send[2];
 
@@ -31,7 +29,7 @@ bool I2CCom::sendData(uint8_t data) {
 	return (rv == 0);
 }
 
-uint8_t I2CCom::getData() {
+uint8_t IRQController::getData() {
 	size_t cnt = 0;
 	uint8_t rv = 0xff;
 	bool verified = false;
@@ -58,18 +56,16 @@ uint8_t I2CCom::getData() {
 	return rv;
 }
 
-void i2c::I2CCom::setSlaveAddr(uint8_t addr) {
+void IRQController::setSlaveAddr(uint8_t addr) {
 	slave_addr = addr;
 }
 
-uint16_t i2c::I2CCom::dumpBuffer() {
+uint16_t IRQController::dumpBuffer() {
 	uint16_t rv;
 	rv = (buf[1] << 8)| buf[0];
 	return rv;
 }
 
-bool I2CCom::verifyData(uint8_t *data) {
+bool IRQController::verifyData(uint8_t *data) {
 	return ((data[0] ^ data[1]) == 0xff);
 }
-
-} /* namespace i2c */

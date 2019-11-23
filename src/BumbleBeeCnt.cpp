@@ -215,10 +215,10 @@ void BumbleBeeCnt::st_wakeup() {
 	states next_state = ST_INIT_PERIPHERALS;
 	BumbleBeeCntData *d = NULL;
 
-	attiny88.setSlaveAddr(sysdefs::res_ctrl::i2c_addr);
+	irqctl.setSlaveAddr(sysdefs::res_ctrl::i2c_addr);
 
 //get sreg from reset controller
-	i2c_reg = attiny88.getData();
+	i2c_reg = irqctl.getData();
 
 	if (i2c_reg == 0xff) {
 		next_state = ST_ERROR;
@@ -236,7 +236,7 @@ void BumbleBeeCnt::st_wakeup() {
 	src = "undef";
 
 	Serial.print("i2cbuf: ");
-	Serial.println(attiny88.dumpBuffer(), BIN);
+	Serial.println(irqctl.dumpBuffer(), BIN);
 	Serial.print("I2CREG: 0x");
 	Serial.print(i2c_reg, BIN);
 	Serial.println();
@@ -272,7 +272,7 @@ void BumbleBeeCnt::st_init_peripherals() {
 
 		i2c_reg |= sysdefs::res_ctrl::sys_initialized;
 
-		attiny88.sendData(i2c_reg);
+		irqctl.sendData(i2c_reg);
 	}
 	InternalEvent(next_state, data);
 }
@@ -740,7 +740,7 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	i2c_reg &=
 	~(sysdefs::res_ctrl::int_src_esp | sysdefs::res_ctrl::int_src_mcp);
 
-	attiny88.sendData(i2c_reg);
+	irqctl.sendData(i2c_reg);
 
 	if (p_data->wlan_en) {
 		next_state = ST_WIFI_INIT;
@@ -787,7 +787,7 @@ void BumbleBeeCnt::st_tare() {
 void BumbleBeeCnt::st_write_to_sd(BumbleBeeCntData* d) {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_WRITE_TO_SD, HEX);
 	File datafile;
-	attiny88.sendData(i2c_reg);
+	irqctl.sendData(i2c_reg);
 	String logstring;
 	BumbleBeeCntData *ev_data;
 
@@ -819,7 +819,7 @@ void BumbleBeeCnt::st_prepare_sleep() {
 #endif
 	//Hier den MCP zurücksetzen, falls während St.M. durchlaufs ein INT angefallen ist.
 	mcp.readGPIOAB();
-	attiny88.sendData(i2c_reg);
+	irqctl.sendData(i2c_reg);
 }
 
 void BumbleBeeCnt::st_goto_sleep() {
