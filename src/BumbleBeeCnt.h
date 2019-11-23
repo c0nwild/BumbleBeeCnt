@@ -17,7 +17,6 @@
 #include "../lib/Ds1307/Ds1307.h"
 #include <SD.h>
 #include <BME280I2C.h>
-#include <HX711.h>
 #include <AccessPoint.h>
 #include <EEPROM.h>
 #include <types.h>
@@ -25,6 +24,7 @@
 #include <EventCounter.h>
 #include <RTCDataBuffer.h>
 #include <ArduinoJson.h>
+#include <HX711I2C.h>
 #include <IRQController.h>
 
 class BumbleBeeCnt: public StateMachine {
@@ -124,7 +124,7 @@ private:
 
 	//Scale
 	//		HX711_ADC scale;
-	HX711 scale;
+	HX711_I2C scale;
 
 	//Interrupt controller
 	IRQController irqctl;
