@@ -1,22 +1,20 @@
 /*
- * I2CCom.h
+ * IRQController.h
  *
  *  Created on: 08.10.2018
  *      Author: cwild
  */
 
-#ifndef LIB_I2C_I2CCOM_H_
-#define LIB_I2C_I2CCOM_H_
+#ifndef LIB_IRQCONTROLLER_IRQCONTROLLER_H_
+#define LIB_IRQCONTROLLER_IRQCONTROLLER_H_
 
 #include <Wire.h>
 #include <Arduino.h>
 
-namespace i2c {
-
-class I2CCom {
+class IRQController {
 public:
-	I2CCom();
-	virtual ~I2CCom();
+	IRQController();
+	virtual ~IRQController();
 	bool sendData(uint8_t data);
 	uint8_t getData();
 	void setSlaveAddr(uint8_t addr);
@@ -31,6 +29,4 @@ private:
 
 };
 
-} /* namespace i2c */
-
-#endif /* LIB_I2C_I2CCOM_H_ */
+#endif /* LIB_IRQCONTROLLER_IRQCONTROLLER_H_ */

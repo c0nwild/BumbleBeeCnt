@@ -12,13 +12,11 @@
 #include "../test/src/serial_debug.h"
 #include <Wire.h>
 #include <StateMachine.h>
-#include "../lib/I2C/I2CCom.h"
 #include <Arduino.h>
 #include <Adafruit_MCP23017.h>
 #include "../lib/Ds1307/Ds1307.h"
 #include <SD.h>
 #include <BME280I2C.h>
-#include <HX711.h>
 #include <AccessPoint.h>
 #include <EEPROM.h>
 #include <types.h>
@@ -26,6 +24,8 @@
 #include <EventCounter.h>
 #include <RTCDataBuffer.h>
 #include <ArduinoJson.h>
+#include <HX711I2C.h>
+#include <IRQController.h>
 
 class BumbleBeeCnt: public StateMachine {
 public:
@@ -59,6 +59,7 @@ private:
 	void do_cal();
 	float weight_meas();
 	void do_tare();
+	void do_calibration();
 
 	int init_peripheral_system();
 	int init_peripheral_system_once();
@@ -124,10 +125,10 @@ private:
 
 	//Scale
 	//		HX711_ADC scale;
-	HX711 scale;
+	HX711_I2C scale;
 
 	//Interrupt controller
-	i2c::I2CCom attiny88;
+	IRQController irqctl;
 
 	//WebServer
 	AccessPoint ap;
