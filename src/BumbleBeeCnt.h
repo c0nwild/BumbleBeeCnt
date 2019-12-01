@@ -59,6 +59,7 @@ private:
 	void do_cal(float calib);
 	float weight_meas();
 	void do_tare();
+	void do_calibration();
 
 	int init_peripheral_system();
 	int init_peripheral_system_once();

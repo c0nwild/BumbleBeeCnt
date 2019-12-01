@@ -36,6 +36,10 @@ class HX711_I2C
 
 		// waits for the chip to be ready and returns a reading
 		long get_weight();
+
+		void tare();
+
+		void calibrate();
 };
 
 #endif /* HX711_h */

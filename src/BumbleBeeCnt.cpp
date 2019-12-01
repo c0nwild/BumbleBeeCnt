@@ -51,7 +51,6 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 
 int BumbleBeeCnt::init_peripheral_system() {
 	int retval = 0;
-	long scale_offset = 0;
 
 	Wire.begin();
 
@@ -59,16 +58,10 @@ int BumbleBeeCnt::init_peripheral_system() {
 		DEBUG_MSG_ARG(DEBUG_ID_BME280, HEX);
 		DEBUG_MSG_PASS(sysdefs::debug::bme280);
 	} else {
-
 		retval += -DEBUG_ID_BME280;
 	}
 
-	EEPROM.begin(128);
-	EEPROM.get(8, scale_offset);
-	EEPROM.end();
-
-	DEBUG_MSG("Offset: " + String(scale_offset))
-	scale.set_offset(scale_offset);
+	scale.begin();
 
 	pinMode(chipSelectSD, OUTPUT);
 	if (SD.begin(chipSelectSD)) {
@@ -82,21 +75,9 @@ int BumbleBeeCnt::init_peripheral_system() {
 }
 
 void BumbleBeeCnt::do_tare() {
-	long offset = 0;
 	DEBUG_MSG("Tare...")
 
-	//Just trigger weight measurement
-	scale.begin(D3,D4);
-	scale.power_up();
-	scale.tare(5);
-	scale.power_down();
-
-	offset = scale.get_offset();
-
-	EEPROM.begin(128);
-	EEPROM.put(8, offset);
-	EEPROM.commit();
-	EEPROM.end();
+	scale.tare();
 
 	InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
@@ -104,30 +85,8 @@ void BumbleBeeCnt::do_tare() {
 float BumbleBeeCnt::weight_meas() {
 	DEBUG_MSG("Weight meas...")
 	float rv = 0.0;
-	float calib = 0.0;
-	long offset = 0;
 
-	EEPROM.begin(128);
-	EEPROM.get(0, calib);
-	EEPROM.end();
-	if (calib == 0.0) {
-		calib = 1.0;
-	}
-
-	EEPROM.begin(128);
-	EEPROM.get(8, offset);
-	EEPROM.end();
-
-	DEBUG_MSG("Calib factor: " + String(calib));
-
-	scale.begin(D3,D4);
-	scale.power_up();
-	scale.set_offset(offset);
-	scale.set_scale(calib);
-
-	rv = scale.get_units();
-
-	scale.power_down();
+	rv = scale.get_weight();
 
 	if (isnan(rv)) {
 		DEBUG_MSG_FAIL(sysdefs::debug::hx711);
@@ -155,19 +114,17 @@ void BumbleBeeCnt::eval_peripheral_event(uint8_t mcp_gpioa) {
 }
 
 void BumbleBeeCnt::prepare_cal() {
-	do_cal(1.0);
 	do_tare();
 	ap.unset_prepare_cal();
 }
 
 void BumbleBeeCnt::do_cal(float calib) {
-	Serial.print("web_cal_factor: ");
-	Serial.println(calib);
-	EEPROM.begin(128);
-	EEPROM.put(0, calib);
-	EEPROM.commit();
-	EEPROM.end();
+	do_calibration();
 	ap.unset_do_cal();
+}
+
+void BumbleBeeCnt::do_calibration() {
+	scale.calibrate();
 }
 
 String BumbleBeeCnt::prepare_log_str(Ds1307::DateTime dt, BumbleBeeCntData* d) {

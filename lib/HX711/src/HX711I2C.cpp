@@ -19,3 +19,9 @@ void HX711_I2C::set_gain(byte gain) {
 
 long HX711_I2C::get_weight() {
 }
+
+void HX711_I2C::tare() {
+}
+
+void HX711_I2C::calibrate() {
+}
