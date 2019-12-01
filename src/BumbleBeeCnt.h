@@ -56,7 +56,7 @@ private:
 	void st_fatal_error(BumbleBeeCntData *d);
 
 	void prepare_cal();
-	void do_cal(float calib);
+	void do_cal();
 	float weight_meas();
 	void do_tare();
 
