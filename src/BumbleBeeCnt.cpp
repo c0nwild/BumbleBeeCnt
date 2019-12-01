@@ -60,12 +60,7 @@ int BumbleBeeCnt::init_peripheral_system() {
 	} else {
 		retval += -DEBUG_ID_BME280;
 	}
-
-<<<<<<< HEAD
-=======
 	scale.begin();
-
->>>>>>> branch 'rework_i2c' of https://github.com/c0nwild/BumbleBeeCnt
 	pinMode(chipSelectSD, OUTPUT);
 	if (SD.begin(chipSelectSD)) {
 		DEBUG_MSG_PASS(sysdefs::debug::sd)
@@ -78,33 +73,19 @@ int BumbleBeeCnt::init_peripheral_system() {
 }
 
 void BumbleBeeCnt::do_tare() {
-<<<<<<< HEAD
-	scale.tare();
-=======
 	DEBUG_MSG("Tare...")
-
 	scale.tare();
-
->>>>>>> branch 'rework_i2c' of https://github.com/c0nwild/BumbleBeeCnt
 	InternalEvent(ST_PREPARE_SLEEP, NULL);
 }
 
 float BumbleBeeCnt::weight_meas() {
 	DEBUG_MSG("Weight meas...")
-<<<<<<< HEAD
 	float rv = scale.get_weight();
-=======
-	float rv = 0.0;
-
-	rv = scale.get_weight();
->>>>>>> branch 'rework_i2c' of https://github.com/c0nwild/BumbleBeeCnt
-
 	if (isnan(rv)) {
 		DEBUG_MSG_FAIL(sysdefs::debug::hx711);
 	} else {
 		DEBUG_MSG("Weight is: " + String(rv));
 	}
-
 	return rv;
 }
 
@@ -129,18 +110,13 @@ void BumbleBeeCnt::prepare_cal() {
 	ap.unset_prepare_cal();
 }
 
-<<<<<<< HEAD
 void BumbleBeeCnt::do_cal() {
-	scale.calibration();
-=======
-void BumbleBeeCnt::do_cal(float calib) {
 	do_calibration();
->>>>>>> branch 'rework_i2c' of https://github.com/c0nwild/BumbleBeeCnt
 	ap.unset_do_cal();
 }
 
 void BumbleBeeCnt::do_calibration() {
-	scale.calibrate();
+	scale.calibration();
 }
 
 String BumbleBeeCnt::prepare_log_str(Ds1307::DateTime dt, BumbleBeeCntData* d) {

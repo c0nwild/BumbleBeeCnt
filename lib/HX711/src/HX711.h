@@ -39,7 +39,7 @@ public:
 	float get_weight();
 
 	// set the OFFSET value for tare weight; times = how many times to read the tare value
-	void tare(byte times = 10);
+	void tare();
 
 	void calibration();
 };

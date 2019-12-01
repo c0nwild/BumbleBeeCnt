@@ -24,7 +24,7 @@
 #include <EventCounter.h>
 #include <RTCDataBuffer.h>
 #include <ArduinoJson.h>
-#include <HX711I2C.h>
+#include <HX711.h>
 #include <IRQController.h>
 
 class BumbleBeeCnt: public StateMachine {
@@ -125,7 +125,7 @@ private:
 
 	//Scale
 	//		HX711_ADC scale;
-	HX711_I2C scale;
+	HX711 scale;
 
 	//Interrupt controller
 	IRQController irqctl;

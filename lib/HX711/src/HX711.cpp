@@ -46,7 +46,7 @@ float HX711::read_from_hx711() {
 	return rx.get_weight();
 }
 
-void HX711::tare(byte times) {
+void HX711::tare() {
 	send_command(do_tare);
 }
 
