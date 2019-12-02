@@ -16,7 +16,7 @@ class RxFrame {
 	union {
 		float f = 0;
 		uint8_t b[sizeof(f)];
-	} weight;
+	} float_value;
 	uint8_t header = 0;
 public:
 	/* Der Konstruktor konvertiert die Datenbytes aus dem Input-Vektor über
@@ -24,11 +24,13 @@ public:
 	 * Constructor converts Databytes from input vector to unsigned integer using
 	 * a union type.
 	 */
-	RxFrame(std::vector<uint8_t> data);
-
-	float get_weight() {
-		return weight.f;
+	RxFrame(std::vector<uint8_t> data) {
+		for (uint8_t idx = 0; idx < sizeof(float_value.f); idx++) {
+			float_value.b[idx] = data.at(idx + sizeof(header));
+		}
 	}
+
+	float get_value() { return float_value.f; }
 };
 
 } /* namespace hx711 */

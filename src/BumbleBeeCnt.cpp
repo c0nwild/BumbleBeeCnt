@@ -290,8 +290,7 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 	String webc_temp = "";
 	String current_page = "";
 
-	float weight;
-	weight = ap.getWeight();
+	float weight = ap.getWeight();
 	if (ap.get_need_weight()) {
 		weight = weight_meas();
 		ap.unset_need_weight();
@@ -302,8 +301,6 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 	}
 
 	if(ap.get_do_cal()){
-		float weight;
-		weight = weight_meas();
 		do_cal();
 	}
 

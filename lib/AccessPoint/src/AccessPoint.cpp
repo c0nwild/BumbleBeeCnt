@@ -8,7 +8,7 @@
 #include "AccessPoint.h"
 #include <cstring>
 
-WiFiServer AccessPoint::server(80);
+WiFiServer AccessPoint::server(sysdefs::wifi::ap_ip, 80);
 WebContent AccessPoint::web_content;
 
 String AccessPoint::_time;
@@ -21,7 +21,7 @@ int AccessPoint::initWifi() {
 	WiFi.softAP(_ssid.c_str(), _password.c_str());
 	server.begin();
 
-	DEBUG_MSG("AP started...");
+	DEBUG_MSG("AP started: " + sysdefs::wifi::ap_ip);
 	return 0;
 }
 
@@ -203,10 +203,10 @@ void AccessPoint::handleClient() {
 		client.print(sHeader);
 		client.write(logFile);
 		logFile.close();
-	} else if (sPath == "/prepare_cal") {
+	} else if (sPath == "/tare") {
 		String ret_str;
 
-		_prepare_cal = true;
+		_tare = true;
 
 		ret_str = R"=====(
 			<head> 
@@ -267,22 +267,15 @@ void AccessPoint::handleClient() {
 
 	} else if (sPath == "/scale_calib") {
 		String content = "";
-		float calib;
-		EEPROM.begin(128);
-		EEPROM.get(0, calib);
-		EEPROM.end();
 
 		web_content.clear();
 		content = web_content.create_weight_entry(peripheral_data.weight);
 		web_content.append(content);
-		content = "Current scale cal. factor: " + String(calib);
-		web_content.append(content);
-		content = web_content.create_input_form("scale_calib",
-				"Scale cal value");
-		web_content.append(content);
-		content = web_content.create_button("Prepare calib", "/prepare_cal");
+		content = web_content.create_button("Tare", "/tare");
 		web_content.append(content);
 		content = web_content.create_button("Do calib", "/do_cal");
+		web_content.append(content);
+		content = "Hint:<br>1. Tare<br>2. Put 1000 g weight on scale<br>3.Do calib";
 		web_content.append(content);
 
 		sendHTMLcontent(200, client, web_content.output());

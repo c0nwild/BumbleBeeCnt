@@ -9,6 +9,7 @@
 #define SRC_SYSTEM_DEFINITIONS_H_
 
 #include <Arduino.h>
+#include <IPAddress.h>
 
 namespace sysdefs {
 
@@ -30,6 +31,7 @@ const uint8_t tare = 0x80;
 namespace wifi {
 const String ssid = "ESPap";
 const String passphrase = "thereisnospoon";
+const IPAddress ap_ip(192,168,4,1);
 } //wifi
 
 namespace general {

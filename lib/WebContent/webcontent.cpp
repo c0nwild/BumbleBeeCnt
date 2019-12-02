@@ -77,10 +77,12 @@ char WebContent::webpage_head[] =
 				<a href='/' id='logo'><img src='images/logo.jpg' alt=''/></a>
 			</div>
 			<div class='body'>
+			<p>
 )=====";
 
 char WebContent::webpage_tail[] =
 		R"=====(
+			</p>
 			</div>
 			<div class='footer'>
 				<ul>

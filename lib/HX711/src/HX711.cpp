@@ -43,7 +43,7 @@ float HX711::read_from_hx711() {
 	}
 
 	hx711::RxFrame rx(i2c_rx_buffer);
-	return rx.get_weight();
+	return rx.get_value();
 }
 
 void HX711::tare() {
@@ -53,4 +53,3 @@ void HX711::tare() {
 void HX711::calibration() {
 	send_command(do_calibration);
 }
-

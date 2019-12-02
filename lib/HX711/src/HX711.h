@@ -12,7 +12,7 @@ private:
 	volatile bool is_event = false;
 
 	enum i2c_cmd : uint8_t {
-		do_measurement = 1, do_tare, do_calibration
+		do_measurement = 1, do_tare, do_calibration, scale_factor
 	};
 
 	enum header_codes {
