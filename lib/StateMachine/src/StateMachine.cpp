@@ -9,10 +9,16 @@
 #include "StateMachine.h"
 
 StateMachine::StateMachine(int maxStates) :
-		currentState(0), _maxStates(maxStates), _eventGenerated(false), _pEventData(
-		NULL), cycleTime(0) {
+		currentState(0),
+		_maxStates(maxStates),
+		_eventGenerated(false),
+		_pEventData(NULL)
+#ifdef SM_CYCLETIME_MEAS
+		,
+		cycleTime(0)
+#endif
+{
 }
-
 // generates an external event. called once per external event
 // to start the state machine executing
 void StateMachine::ExternalEvent(unsigned char newState, EventData *pData) {

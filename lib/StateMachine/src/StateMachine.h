@@ -11,8 +11,6 @@
 #include <stdio.h>
 #include "EventData.h"
 
-#define SM_CYCLETIME_MEAS
-
 struct StateStruct;
 
 class StateMachine {
