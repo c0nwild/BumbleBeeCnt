@@ -13,6 +13,11 @@
 
 namespace sysdefs {
 
+namespace pin_mapping {
+const unsigned chip_select_sd = D8;
+const unsigned pwr_mgmnt_trigger = D3;
+} //pin_mapping
+
 namespace res_ctrl {
 const uint8_t i2c_addr = 0x47;
 const unsigned sys_initialized = (1 << 2);
@@ -26,6 +31,12 @@ const uint8_t wlan_en = 0x10;
 const uint8_t lb0 = 0x20;
 const uint8_t lb1 = 0x40;
 const uint8_t tare = 0x80;
+const uint8_t wlan_en_pin = 4;
+const uint8_t lb0_pin = 5;
+const uint8_t lb1_pin = 6;
+const uint8_t tare_pin = 7;
+
+const uint8_t pwr_mgmnt_trigger = 0;
 } //mcp
 
 namespace wifi {
@@ -38,7 +49,8 @@ namespace general {
 const String log_filename = "data.txt";
 const String error_filename = "error.txt";
 const String config_filename = "CONFIG";
-const unsigned log_sensor_interval = 600; // in sec.
+// TODO: Change log_sensor_interval back to 600 sec
+const unsigned log_sensor_interval = 1; // in sec.
 const unsigned event_sum_interval = 60; // in sec.
 const unsigned event_timeout = 5; // in sec.
 const int dir_in = 1;
@@ -64,7 +76,13 @@ const String bme280 = "bme280";
 const String sd = "sd";
 const String mcp = "mcp 23017";
 const String hx711 = "hx711";
-}
+} //debug
+
+namespace pwr_mgmnt {
+//TODO: Change batt_thres_volt back to 512
+const int batt_thresh_volt = 800; //in digits == 2,5V
+} //pwr_mgmnt
+
 } //sysdefs
 
 #endif /* SRC_SYSTEM_DEFINITIONS_H_ */

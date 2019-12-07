@@ -25,14 +25,15 @@ int BumbleBeeCnt::init_peripheral_system_once() {
 		mcp.pullUp(n, LOW);
 		mcp.pinMode(n, OUTPUT);
 	}
-	mcp.pinMode(7, INPUT);
-	mcp.pullUp(7, HIGH);
-	mcp.pinMode(6, INPUT);
-	mcp.pullUp(6, HIGH);
-	mcp.pinMode(5, INPUT);
-	mcp.pullUp(5, HIGH);
-	mcp.pinMode(4, INPUT);
-	mcp.pullUp(4, HIGH);
+	mcp.pinMode(sysdefs::mcp::wlan_en_pin, INPUT);
+	mcp.pullUp(sysdefs::mcp::wlan_en_pin, HIGH);
+	mcp.pinMode(sysdefs::mcp::lb0_pin, INPUT);
+	mcp.pullUp(sysdefs::mcp::lb0_pin, HIGH);
+	mcp.pinMode(sysdefs::mcp::lb1_pin, INPUT);
+	mcp.pullUp(sysdefs::mcp::lb1_pin, HIGH);
+	mcp.pinMode(sysdefs::mcp::tare_pin, INPUT);
+	mcp.pullUp(sysdefs::mcp::tare_pin, HIGH);
+
 	for (int n = 0; n < 16; n++)
 		mcp.setupInterruptPin(n, CHANGE);
 	mcp.setupInterrupts(true, true, LOW);
@@ -60,9 +61,8 @@ int BumbleBeeCnt::init_peripheral_system() {
 	} else {
 		retval += -DEBUG_ID_BME280;
 	}
-	scale.begin();
-	pinMode(chipSelectSD, OUTPUT);
-	if (SD.begin(chipSelectSD)) {
+
+	if (SD.begin(sysdefs::pin_mapping::chip_select_sd)) {
 		DEBUG_MSG_PASS(sysdefs::debug::sd)
 	} else {
 		DEBUG_MSG_FAIL(sysdefs::debug::sd)
@@ -119,6 +119,20 @@ void BumbleBeeCnt::do_calibration() {
 	scale.calibration();
 }
 
+void BumbleBeeCnt::st_power_management(BumbleBeeCntData *p_data) {
+	DEBUG_MSG_ARG(DEBUG_ID_ST_POWER_MANAGEMENT, HEX);
+
+	// Trigger powerbank if necessary
+	if (p_data->v_batt < sysdefs::pwr_mgmnt::batt_thresh_volt){
+		DEBUG_MSG("Power low (" + String(p_data->v_batt) + ") ... Trigger powerbank");
+		mcp.digitalWrite(sysdefs::mcp::pwr_mgmnt_trigger, HIGH);
+		delay(100);
+		mcp.digitalWrite(sysdefs::mcp::pwr_mgmnt_trigger, LOW);
+	}
+
+	InternalEvent(ST_PREPARE_SLEEP, NULL);
+}
+
 String BumbleBeeCnt::prepare_log_str(Ds1307::DateTime dt, BumbleBeeCntData* d) {
 	String date_str = "";
 	String log_str = "";
@@ -150,7 +164,7 @@ String BumbleBeeCnt::prepare_log_str(Ds1307::DateTime dt, BumbleBeeCntData* d) {
 	log_str += ",";
 	log_str += d->weight;
 	log_str += ",";
-	log_str += (float)d->v_batt / 1024 * 5;
+	log_str += (float)d->v_batt / 1024.0 * 5.0;
 	log_str += ",";
 	log_str += ts;
 
@@ -423,7 +437,7 @@ void BumbleBeeCnt::st_read_peripherals() {
 /*State function analyzes sensor data, stores data to ram and
  * prepares string for log entry.
  * Two different implementations depending on presence of second light barrier
- * and directory sensing.
+ * and direction sensing.
  */
 #ifndef DIR_SENSE
 void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
@@ -529,7 +543,7 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 	InternalEvent(next_state, d_out);
 }
-#else
+#else //DIR_SENSE
 void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_EVAL_PERIPHERAL_DATA, HEX);
 
@@ -731,19 +745,21 @@ void BumbleBeeCnt::st_write_to_sd(BumbleBeeCntData* d) {
 	File datafile;
 	irqctl.sendData(i2c_reg);
 	String logstring;
-	BumbleBeeCntData *ev_data;
+	BumbleBeeCntData *ev_data = new BumbleBeeCntData;
+	states next_state = ST_POWER_MANAGEMENT;
 
 	datafile = SD.open(data_file_name, FILE_WRITE);
 
 	if (datafile) {
 		datafile.println(d->info);
+		*ev_data = *d;
 	} else {
-		ev_data = new BumbleBeeCntData;
 		ev_data->info = "SD IO-Error";
-		InternalEvent(ST_ERROR, ev_data);
+		next_state = ST_ERROR;
 	}
 	datafile.close();
-	InternalEvent(ST_PREPARE_SLEEP, NULL);
+
+	InternalEvent(next_state, ev_data);
 }
 
 void BumbleBeeCnt::st_prepare_sleep() {

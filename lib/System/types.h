@@ -35,7 +35,7 @@ struct BumbleBeeCntData: public EventData {
 	uint8_t wlan_en = 0;
 	uint8_t tare = 0;
 	uint16_t mcp_gpioab = 0;
-	int v_batt = 0;
+	int v_batt = 0; //in digits (10 bit)
 	bool new_data = false;
 	bool do_log_entry = false;
 };

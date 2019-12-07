@@ -14,8 +14,11 @@
 //#define DIR_SENSE // Direction sensing
 
 /* Debugging */
-//#define SERIAL_DEBUG
-//#define SERIAL_DEBUG_STATES
-//#define SERIAL_DEBUG_INT_CNTR
+#define SERIAL_DEBUG
+#define SERIAL_DEBUG_STATES
+#define SERIAL_DEBUG_INT_CNTR
+
+/* Program cycle time measurement */
+//#define SM_CYCLETIME_MEAS
 
 #endif /* LIB_SYSTEM_SYSCONFIG_H_ */

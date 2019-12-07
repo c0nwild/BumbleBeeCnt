@@ -1,8 +1,6 @@
-/*
- * BumbleBeeCnt.h
+/** @file BumbleBeeCnt.h
+ * @brief The infamous Bumble Bee Counter
  *
- *  Created on: 19.07.2018
- *      Author: conradwild
  */
 
 #ifndef SRC_BUMBLEBEECNT_H_
@@ -27,6 +25,15 @@
 #include <HX711.h>
 #include <IRQController.h>
 
+/** @brief BumbleBeeCnt class implements a state machine that coordinates
+ * logging and power management
+ *
+ * This is the main class for a esp8266 based datalogger. The main features comprise:
+ * - weight log
+ * - barometer / temperature log
+ * - activity log
+ * - power management for low battery consumption
+*/
 class BumbleBeeCnt: public StateMachine {
 public:
 	BumbleBeeCnt() :
@@ -48,6 +55,13 @@ private:
 	void st_init_peripherals();
 	void st_read_peripherals();
 	void st_eval_peripheral_data(BumbleBeeCntData *p_data);
+	/** @brief Power management method
+	 *
+	 * This method triggers the external usb power bank, if the internal
+	 * buffer battery goes below a predefined voltage threshold. Check is
+	 * performed along with writing to the log file all 10 minutes.
+	 */
+	void st_power_management(BumbleBeeCntData *p_data);
 	void st_tare();
 	void st_write_to_sd(BumbleBeeCntData *d);
 	void st_prepare_sleep();
@@ -75,8 +89,6 @@ private:
 
 	uint8_t i2c_reg = 0;
 
-	const unsigned chipSelectSD = D8; //D8
-
 	BEGIN_STATE_MAP
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_wakeup)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_wifi_init)
@@ -85,6 +97,7 @@ private:
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_init_peripherals)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_read_peripherals)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_eval_peripheral_data)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_power_management)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_tare)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_write_to_sd)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_prepare_sleep)
@@ -101,6 +114,7 @@ private:
 		ST_INIT_PERIPHERALS,
 		ST_READ_PERIPHERALS,
 		ST_EVAL_PERIPHERAL_DATA,
+		ST_POWER_MANAGEMENT,
 		ST_TARE,
 		ST_WRITE_TO_SD,
 		ST_PREPARE_SLEEP,
