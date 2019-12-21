@@ -245,8 +245,6 @@ void BumbleBeeCnt::st_wifi_init() {
 	float weight;
 	states next_state = ST_WIFI;
 
-	String ssid = "";
-	String passwd = "";
 	String config_str = "{ \"ssid\",\"error\"}";
 	File config_file;
 
@@ -301,8 +299,6 @@ void BumbleBeeCnt::st_wifi(BumbleBeeCntData *d) {
 	Ds1307::DateTime dt = { 0 };
 
 	String str_scale_calib = "";
-	String webc_temp = "";
-	String current_page = "";
 
 	float weight = ap.getWeight();
 	if (ap.get_need_weight()) {
@@ -445,7 +441,7 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 	states next_state = ST_PREPARE_SLEEP;
 
-	String log_str = "";
+	String log_str;
 
 	BumbleBeeCntData *d_out = NULL;
 
