@@ -6,6 +6,8 @@
 #include <Wire.h>
 #include <memory>
 #include <vector>
+#include <system_definitions.h>
+#include <sysconfig.h>
 
 class HX711 {
 private:

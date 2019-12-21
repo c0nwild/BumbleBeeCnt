@@ -55,7 +55,7 @@ struct BumbleBeeRamData {
 #endif
 	int8_t dir = 0;
 	int v_batt = 0;
-	long ts = 0;
+	uint32_t ts = 0;
 	uint16_t ts_diff = 0;
 };//size 31 (mit lb1 und dir sense)
 

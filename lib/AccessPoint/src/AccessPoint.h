@@ -10,7 +10,7 @@
 
 #define SERIAL_DEBUG
 
-#include "../../test/src/serial_debug.h"
+#include <serial_debug.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <webcontent.h>

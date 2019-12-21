@@ -384,7 +384,7 @@ void BumbleBeeCnt::st_read_peripherals() {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_READ_PERIPHERALS, HEX)
 	states next_state = ST_EVAL_PERIPHERAL_DATA;
 
-	long last_ts = 0;
+	uint32_t last_ts = 0;
 	uint16_t ts_diff = 0;
 	uint16_t last_ts_diff = 0;
 

@@ -6,7 +6,7 @@
  */
 
 #include <RTCDataBuffer.h>
-#include "../../test/src/serial_debug.h"
+#include <serial_debug.h>
 extern "C" {
 #include <user_interface.h>
 }

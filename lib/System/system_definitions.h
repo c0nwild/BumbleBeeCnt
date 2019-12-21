@@ -50,8 +50,8 @@ const String log_filename = "data.txt";
 const String error_filename = "error.txt";
 const String config_filename = "CONFIG";
 // TODO: Change log_sensor_interval back to 600 sec
-const unsigned log_sensor_interval = 1; // in sec.
-const unsigned event_sum_interval = 60; // in sec.
+const unsigned log_sensor_interval = 5; // in sec.
+const uint16_t event_sum_interval = 60; // in sec.
 const unsigned event_timeout = 5; // in sec.
 const int dir_in = 1;
 const int dir_out = -1;
@@ -69,6 +69,8 @@ const uint8_t rtc_bmbcnt_data = (rtc_memstart + 32); // BumbleBeeRamData 31 byte
 
 namespace hx711 {
 const float hx711_cal_weight = 1000.0;
+const uint8_t i2c_address = 0x4;
+const uint8_t data_frame_size = 6; //1 byte header + 4 byte data + 1 byte crc
 } //hx711
 
 namespace debug {

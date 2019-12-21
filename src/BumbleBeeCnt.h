@@ -7,7 +7,7 @@
 #define SRC_BUMBLEBEECNT_H_
 
 #include <sysconfig.h>
-#include "../test/src/serial_debug.h"
+#include <serial_debug.h>
 #include <Wire.h>
 #include <StateMachine.h>
 #include <Arduino.h>
@@ -125,7 +125,7 @@ private:
 	};
 
 	Ds1307::DateTime dt;
-	long ts = 0;
+	uint32_t ts = 0;
 	uint64_t reset_cntdown = 0; //Time until esp has to wake itself.
 
 	//BME280
