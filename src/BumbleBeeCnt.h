@@ -89,8 +89,6 @@ private:
 
 	uint8_t i2c_reg = 0;
 
-	uint8_t test = 0;
-
 	BEGIN_STATE_MAP
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_wakeup)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_wifi_init)
