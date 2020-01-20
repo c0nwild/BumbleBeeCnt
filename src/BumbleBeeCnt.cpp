@@ -119,18 +119,17 @@ void BumbleBeeCnt::do_calibration() {
 	scale.calibration();
 }
 
-void BumbleBeeCnt::st_power_management(BumbleBeeCntData *p_data) {
+void BumbleBeeCnt::st_power_management() {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_POWER_MANAGEMENT, HEX);
 
 	// Trigger powerbank if necessary
-	if (p_data->v_batt < sysdefs::pwr_mgmnt::batt_thresh_volt){
-		DEBUG_MSG("Power low (" + String(p_data->v_batt) + ") ... Trigger powerbank");
-		mcp.digitalWrite(sysdefs::mcp::pwr_mgmnt_trigger, HIGH);
-		delay(100);
-		mcp.digitalWrite(sysdefs::mcp::pwr_mgmnt_trigger, LOW);
-	}
 
-	InternalEvent(ST_PREPARE_SLEEP, NULL);
+	mcp.digitalWrite(sysdefs::mcp::pwr_mgmnt_trigger, HIGH);
+	delay(100);
+	mcp.digitalWrite(sysdefs::mcp::pwr_mgmnt_trigger, LOW);
+	delay(100);
+
+	InternalEvent(ST_INIT_PERIPHERALS, NULL);
 }
 
 String BumbleBeeCnt::prepare_log_str(Ds1307::DateTime dt, BumbleBeeCntData* d) {
@@ -187,6 +186,9 @@ void BumbleBeeCnt::st_wakeup() {
 		next_state = ST_ERROR;
 		d = new BumbleBeeCntData;
 		d->info = "invalid data from int ctrl";
+	}
+	if (i2c_reg & sysdefs::res_ctrl::int_src_esp){
+		next_state = ST_POWER_MANAGEMENT;
 	}
 
 #ifdef SERIAL_DEBUG_INT_CNTR
@@ -382,7 +384,7 @@ void BumbleBeeCnt::st_read_peripherals() {
 
 	uint32_t last_ts = 0;
 	uint16_t ts_diff = 0;
-	uint16_t last_ts_diff = 0;
+	uint16_t last_ts_tick_count = 0;
 
 	BumbleBeeCntData* data;
 	data = new BumbleBeeCntData;
@@ -391,36 +393,48 @@ void BumbleBeeCnt::st_read_peripherals() {
 
 	ram_data = rtc_buf.getBuffer();
 	last_ts = ram_data.ts;
-	last_ts_diff = ram_data.ts_diff;
+	last_ts_tick_count = ram_data.ts_tick_count;
 
 	ds1307.getDateTime(&dt);
 	ts = ds1307.getTimestamp();
 
+	//Time increment since last timestamp.
 	ts_diff = (uint16_t) (ts - last_ts);
 
-	DEBUG_MSG("ts diff: " + String(ts_diff));
-	DEBUG_MSG("delta ts_diff: " + String(ts_diff - last_ts_diff));
-
-	if ((ts_diff - last_ts_diff) >= sysdefs::general::event_sum_interval) {
-		data->do_log_entry = true;
-		ram_data.ts_diff = ts_diff;
+	if (ts_diff >= sysdefs::general::wakeup_interval) {
+		++ram_data.ts_tick_count;
+		ram_data.ts = ts;
 		rtc_buf.setBuffer(&ram_data);
 	}
 
-	if (ts_diff >= sysdefs::general::log_sensor_interval) {
+	DEBUG_MSG("ts diff: " + String(ts_diff));
+	DEBUG_MSG("tick count: " + String(ram_data.ts_tick_count));
+
+	//Logging has to be performed just once -> get tick edge
+	bool is_new_tick = (ram_data.ts_tick_count != last_ts_tick_count);
+
+	if ((ram_data.ts_tick_count %
+			sysdefs::general::event_sum_interval_count == 0) &&
+			is_new_tick){
+		data->do_log_entry = true;
+	}
+
+	if ((ram_data.ts_tick_count %
+			sysdefs::general::log_sensor_interval_count == 0) &&
+			is_new_tick) {
 		data->weight = weight_meas();
 		read_sensors(data);
 		data->new_data = true;
 		data->do_log_entry = true;
-		ram_data.ts = ts;
-		ram_data.ts_diff = 0;
+		ram_data.ts_tick_count = 0;
 		ts_diff = 0;
 		rtc_buf.setBuffer(&ram_data);
 	}
 
 	read_port_expander(data);
 
-	reset_cntdown = (sysdefs::general::log_sensor_interval - ts_diff);
+	reset_cntdown = sysdefs::general::wakeup_interval -
+			(ts_diff % sysdefs::general::wakeup_interval);
 
 	if (data->mcp_gpioab & sysdefs::mcp::tare) {
 		next_state = ST_TARE;
@@ -443,7 +457,8 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 
 	String log_str;
 
-	BumbleBeeCntData *d_out = NULL;
+	BumbleBeeCntData *d_out = new BumbleBeeCntData;
+	*d_out = *p_data;
 
 	BumbleBeeRamData ram_data;
 
@@ -517,9 +532,6 @@ void BumbleBeeCnt::st_eval_peripheral_data(BumbleBeeCntData* p_data) {
 		next_state = ST_WIFI_INIT;
 	} else {
 		if (p_data->do_log_entry) {
-			d_out = new BumbleBeeCntData;
-
-			*d_out = *p_data;
 			log_str = prepare_log_str(dt, p_data);
 #ifdef SERIAL_DEBUG
 			Serial.println(log_str);
@@ -742,7 +754,7 @@ void BumbleBeeCnt::st_write_to_sd(BumbleBeeCntData* d) {
 	irqctl.sendData(i2c_reg);
 	String logstring;
 	BumbleBeeCntData *ev_data = new BumbleBeeCntData;
-	states next_state = ST_POWER_MANAGEMENT;
+	states next_state = ST_PREPARE_SLEEP;
 
 	datafile = SD.open(data_file_name, FILE_WRITE);
 
@@ -758,14 +770,9 @@ void BumbleBeeCnt::st_write_to_sd(BumbleBeeCntData* d) {
 	InternalEvent(next_state, ev_data);
 }
 
-void BumbleBeeCnt::st_prepare_sleep() {
+void BumbleBeeCnt::st_prepare_sleep(BumbleBeeCntData *d) {
 	DEBUG_MSG_ARG(DEBUG_ID_ST_PREPARE_SLEEP, HEX)
-	InternalEvent(ST_GOTO_SLEEP, NULL);
 	i2c_reg |= sysdefs::res_ctrl::allowreset;
-//	Wire.begin();
-//	Wire.beginTransmission(sysdefs::res_ctrl::i2c_addr);
-//	Wire.write(i2c_reg);
-//	Wire.endTransmission(true);
 #ifdef SERIAL_DEBUG_INT_CNTR
 	Serial.print("I2CREG: 0x");
 	Serial.print(i2c_reg, BIN);
@@ -774,6 +781,7 @@ void BumbleBeeCnt::st_prepare_sleep() {
 	//Hier den MCP zurücksetzen, falls während St.M. durchlaufs ein INT angefallen ist.
 	mcp.readGPIOAB();
 	irqctl.sendData(i2c_reg);
+	InternalEvent(ST_GOTO_SLEEP, NULL);
 }
 
 void BumbleBeeCnt::st_goto_sleep() {

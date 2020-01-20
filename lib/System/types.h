@@ -56,8 +56,9 @@ struct BumbleBeeRamData {
 	int8_t dir = 0;
 	int v_batt = 0;
 	uint32_t ts = 0;
-	uint16_t ts_diff = 0;
-};//size 31 (mit lb1 und dir sense)
+	uint16_t ts_tick_count = 0;
+	uint8_t wakeup_countdown = 0;
+};//size 32 (mit lb1 und dir sense)
 
 enum event_eval {
 	new_edge_lb0 = 0,

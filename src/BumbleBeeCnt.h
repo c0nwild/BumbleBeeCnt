@@ -57,14 +57,12 @@ private:
 	void st_eval_peripheral_data(BumbleBeeCntData *p_data);
 	/** @brief Power management method
 	 *
-	 * This method triggers the external usb power bank, if the internal
-	 * buffer battery goes below a predefined voltage threshold. Check is
-	 * performed along with writing to the log file all 10 minutes.
+	 * This method triggers the external usb power bank.
 	 */
-	void st_power_management(BumbleBeeCntData *p_data);
+	void st_power_management();
 	void st_tare();
 	void st_write_to_sd(BumbleBeeCntData *d);
-	void st_prepare_sleep();
+	void st_prepare_sleep(BumbleBeeCntData *d);
 	void st_goto_sleep();
 	void st_error(BumbleBeeCntData *d);
 	void st_fatal_error(BumbleBeeCntData *d);
