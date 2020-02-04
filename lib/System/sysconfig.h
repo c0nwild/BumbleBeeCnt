@@ -18,4 +18,7 @@
 //#define SERIAL_DEBUG_STATES
 //#define SERIAL_DEBUG_INT_CNTR
 
+/* Program cycle time measurement */
+//#define SM_CYCLETIME_MEAS
+
 #endif /* LIB_SYSTEM_SYSCONFIG_H_ */

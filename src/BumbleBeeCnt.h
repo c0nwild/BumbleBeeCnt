@@ -1,15 +1,13 @@
-/*
- * BumbleBeeCnt.h
+/** @file BumbleBeeCnt.h
+ * @brief The infamous Bumble Bee Counter
  *
- *  Created on: 19.07.2018
- *      Author: conradwild
  */
 
 #ifndef SRC_BUMBLEBEECNT_H_
 #define SRC_BUMBLEBEECNT_H_
 
 #include <sysconfig.h>
-#include "../test/src/serial_debug.h"
+#include <serial_debug.h>
 #include <Wire.h>
 #include <StateMachine.h>
 #include <Arduino.h>
@@ -27,6 +25,15 @@
 #include <HX711.h>
 #include <IRQController.h>
 
+/** @brief BumbleBeeCnt class implements a state machine that coordinates
+ * logging and power management
+ *
+ * This is the main class for a esp8266 based datalogger. The main features comprise:
+ * - weight log
+ * - barometer / temperature log
+ * - activity log
+ * - power management for low battery consumption
+*/
 class BumbleBeeCnt: public StateMachine {
 public:
 	BumbleBeeCnt() :
@@ -48,9 +55,14 @@ private:
 	void st_init_peripherals();
 	void st_read_peripherals();
 	void st_eval_peripheral_data(BumbleBeeCntData *p_data);
+	/** @brief Power management state function
+	 *
+	 * This state triggers the external usb power bank.
+	 */
+	void st_power_management();
 	void st_tare();
 	void st_write_to_sd(BumbleBeeCntData *d);
-	void st_prepare_sleep();
+	void st_prepare_sleep(BumbleBeeCntData *d);
 	void st_goto_sleep();
 	void st_error(BumbleBeeCntData *d);
 	void st_fatal_error(BumbleBeeCntData *d);
@@ -75,8 +87,6 @@ private:
 
 	uint8_t i2c_reg = 0;
 
-	const unsigned chipSelectSD = D8; //D8
-
 	BEGIN_STATE_MAP
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_wakeup)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_wifi_init)
@@ -85,6 +95,7 @@ private:
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_init_peripherals)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_read_peripherals)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_eval_peripheral_data)
+		STATE_MAP_ENTRY(&BumbleBeeCnt::st_power_management)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_tare)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_write_to_sd)
 		STATE_MAP_ENTRY(&BumbleBeeCnt::st_prepare_sleep)
@@ -101,6 +112,7 @@ private:
 		ST_INIT_PERIPHERALS,
 		ST_READ_PERIPHERALS,
 		ST_EVAL_PERIPHERAL_DATA,
+		ST_POWER_MANAGEMENT,
 		ST_TARE,
 		ST_WRITE_TO_SD,
 		ST_PREPARE_SLEEP,
@@ -111,7 +123,7 @@ private:
 	};
 
 	Ds1307::DateTime dt;
-	long ts = 0;
+	uint32_t ts = 0;
 	uint64_t reset_cntdown = 0; //Time until esp has to wake itself.
 
 	//BME280
