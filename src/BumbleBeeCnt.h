@@ -55,9 +55,9 @@ private:
 	void st_init_peripherals();
 	void st_read_peripherals();
 	void st_eval_peripheral_data(BumbleBeeCntData *p_data);
-	/** @brief Power management method
+	/** @brief Power management state function
 	 *
-	 * This method triggers the external usb power bank.
+	 * This state triggers the external usb power bank.
 	 */
 	void st_power_management();
 	void st_tare();
