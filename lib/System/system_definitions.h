@@ -47,7 +47,7 @@ namespace general {
 const String log_filename = "data.txt";
 const String error_filename = "error.txt";
 const String config_filename = "CONFIG";
-const uint16_t wakeup_interval = 15; // in sec.
+const uint16_t wakeup_interval = 10; // in sec.
 // TODO: Change log_sensor_interval back to 600 sec
 const unsigned log_sensor_interval = 600; // in sec.
 const uint8_t log_sensor_interval_count =
